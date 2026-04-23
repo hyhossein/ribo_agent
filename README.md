@@ -1,70 +1,142 @@
-# RIBO Level 1 Exam Agent
+# RIBO Agent
+
+[![CI](https://github.com/hyhossein/ribo_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/hyhossein/ribo_agent/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/hyhossein/ribo_agent?include_prereleases)](https://github.com/hyhossein/ribo_agent/releases)
 
 An AI agent that answers multiple-choice questions from the Ontario
 **Registered Insurance Brokers of Ontario (RIBO) Level 1** licensing exam.
 
-## The task
+Built with fully open-source, locally-runnable components. Designed to
+promote cleanly to Azure ML when production is ready.
 
-Ontario brokers must pass the RIBO exam to become licensed. The exam tests
-knowledge of the RIB Act, Ontario Regulations 989/990/991, the RIBO By-Laws,
-and the Ontario Automobile Policy (OAP 1), plus general insurance concepts
-such as subrogation, indemnity, coverage forms, and the like.
+---
 
-The take-home: build an agent that gets as many questions right as possible
-on a held-out set, using:
+## TL;DR
 
-- **Study corpus** (`data/raw/study/`) — RIB Act, Ontario Regulations, three
-  RIBO By-Laws, OAP 2025.
-- **Question corpus** (`data/raw/questions/`) — two official RIBO sample
-  papers (with answer keys) plus two larger RIBO licensing-manual question
-  sets where the correct option is marked in **bold** type.
+- **What it does.** Takes a RIBO exam question in, returns A/B/C/D out.
+- **How.** Local open-source LLM (Qwen 2.5 7B via Ollama) + retrieval
+  over the official study corpus (RIB Act, Ontario Regulations, RIBO
+  By-Laws, OAP 2025).
+- **Where it runs.** Today on a laptop. Tomorrow on Azure ML Managed
+  Online Endpoints with one config switch.
+- **How we prove it works.** 169-question held-out eval set with
+  ground-truth answers, parsed directly from the official RIBO sample
+  materials. Accuracy, latency, and cost logged per release.
 
-## Repo status
+## Status
 
-This repo is being built up over the course of the week. The commit history
-is the story; each day adds a focused chunk of work with its own tests and
-benchmarks. See [`PLAN.md`](./PLAN.md) for the 7-day breakdown.
+| Release | Scope | Evidence |
+| :--- | :--- | :--- |
+| [v0.1.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.1.0) | Parsers, eval set, 35 tests | 169 MCQs in `data/parsed/` |
+| [v0.2.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.2.0) | CI/CD, LLM + storage interfaces, Azure ML stubs | 47 tests green on push |
+| v0.3.0 | Manual-PDF extractor + study-doc chunker | Chunked knowledge base |
+| v0.4.0 | Embeddings + retrieval evaluation | Recall@k metrics |
+| v0.5.0 | Baseline agent v0 + retrieval-augmented agent v1 | First accuracy number |
+| v0.6.0 | v2 (few-shot) + v3 (self-consistency) + full CI | Accuracy lift per variant |
+| v1.0.0 | Final report, profiling, error analysis, Azure ML deployment recipe | End-to-end reproducible |
 
-| Day | Focus | Status |
-| :-- | :---- | :----- |
-| 1   | EDA — understand the data before writing any system | ✅ done |
-| 2   | Parsers & eval set | ✅ done (169 MCQs, 35 tests) |
-| 3   | Knowledge-base ingestion & chunking | — |
-| 4   | Embeddings + retrieval eval | — |
-| 5   | Zero-shot baseline (v0) and simple RAG (v1) | — |
-| 6   | v2/v3 agents (few-shot, domain routing, self-consistency) + CI | — |
-| 7   | Final report, profiling, error analysis | — |
+See [`PLAN.md`](./PLAN.md) for the build plan and
+[`CHANGELOG.md`](./CHANGELOG.md) for detailed release notes.
 
-## Layout
+## Architecture
 
 ```
-data/
-  raw/
-    questions/     # original PDFs, untouched
-    study/         # original study documents, untouched
-notebooks/         # EDA and analysis (one per day)
-src/
-  ribo_agent/      # library code (parsers, agents, retrieval)
-tests/             # unit + integration tests
-configs/           # agent configs
-results/           # eval results and reports
+                  ┌──────────────────────────┐
+                  │  Agent (v0 .. v3)        │
+                  │  prompt + retrieve + ask │
+                  └────┬─────────────────┬───┘
+                       │                 │
+                       ▼                 ▼
+               ┌──────────────┐   ┌─────────────┐
+               │ LLMClient    │   │ Retriever   │
+               │ (Protocol)   │   │ (FAISS)     │
+               └──────┬───────┘   └─────────────┘
+            ┌─────────┴──────────┐
+            ▼                    ▼
+     ┌─────────────┐      ┌────────────────┐
+     │ Ollama      │      │ Azure ML       │
+     │ (local dev) │      │ Managed Online │
+     │             │      │ Endpoint       │
+     └─────────────┘      └────────────────┘
+```
+
+Every agent depends on the `LLMClient` protocol, never on a specific
+backend. Swap local ↔ Azure ML by editing a single config line:
+
+```yaml
+# configs/v0_baseline.yaml
+llm:
+  backend: ollama     # or: azureml
+  model: qwen2.5:7b-instruct
 ```
 
 ## Running locally
 
-Requires `poppler-utils` and Python 3.11+. Inside an activated conda env:
-
 ```bash
-make install       # pip install -e . plus declared deps
-make parse         # parse both PDFs -> data/parsed/*.jsonl
-make test          # run pytest (currently 35 tests, ~0.4s)
+# one-time setup
+conda create -n ribo python=3.11 -y
+conda activate ribo
+pip install -e .[dev]
+
+# start the local LLM (separate terminal, leave running)
+brew install ollama
+ollama serve &
+ollama pull qwen2.5:7b-instruct
+
+# generate the eval set and run tests
+make parse     # -> data/parsed/{sample_questions,practice_exam}.jsonl
+make test      # pytest, 47 tests, <1s
 ```
 
-After `make parse` you will have:
+Evaluation and agent runs land in v0.4.0+; see `PLAN.md`.
+
+## Repo layout
 
 ```
-data/parsed/sample_questions.jsonl    # 79 MCQs with Content Domain metadata
-data/parsed/practice_exam.jsonl       # 90 MCQs from the X-grid-keyed PDF
+src/ribo_agent/
+    parsers/         # PDF -> canonical MCQ JSONL
+    llm/             # LLM client abstraction + Ollama and Azure ML impls
+    io/              # Storage abstraction (local + Azure Blob stub)
+tests/               # pytest — 47 tests currently
+notebooks/           # EDA and analysis, one per stage
+docs/                # EDA write-up, design decisions
+configs/             # one YAML per agent variant
+data/
+    raw/             # immutable inputs (git-tracked)
+    parsed/          # derived: eval JSONL (gitignored, rebuild with `make parse`)
+    kb/              # derived: chunked study corpus (v0.3.0)
+    index/           # derived: FAISS indices (v0.4.0)
+results/             # per-run eval reports (v0.5.0+)
+.github/workflows/   # CI
 ```
 
-Day 3 adds the manual extractor and the study-doc chunker.
+`raw/` is git-tracked (small, immutable). Everything else is a
+deterministic function of code + raw inputs, so it is gitignored and
+rebuilt by a Makefile target. `make clean` removes all derived state.
+
+## Design principles
+
+**Local-first, cloud-ready.** Every capability that could eventually
+live on Azure ML (LLM, storage, embeddings, vector index) sits behind a
+small interface with two implementations — a local one for development
+and a cloud one for production. Today both resolve to local; in v1.0.0
+the Azure path is fully wired.
+
+**Reproducible.** Raw PDFs in, canonical JSONL out, deterministic
+chunks and embeddings, fixed LLM temperature 0.0 for baselines. Any
+number in `results/` can be re-derived from a clean checkout.
+
+**Tested where it matters.** Every PDF-parsing trap identified during
+EDA is backed by a named regression test (`tests/test_*_parser.py`)
+so silent breakage becomes loud.
+
+**Observable.** GitHub Actions runs every test on every push. Each
+release is tagged, notable changes live in `CHANGELOG.md`, and eval
+reports in `results/` are versioned markdown so an exec can read a
+commit diff and see the number move.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
