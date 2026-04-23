@@ -4,26 +4,54 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/hyhossein/ribo_agent?include_prereleases)](https://github.com/hyhossein/ribo_agent/releases)
+[![Tests](https://img.shields.io/badge/tests-81%20passing-brightgreen.svg)](./tests)
 
 An AI agent that answers multiple-choice questions from the Ontario
-**Registered Insurance Brokers of Ontario (RIBO) Level 1** licensing exam.
+**Registered Insurance Brokers of Ontario (RIBO) Level 1** licensing
+exam. Fully open-source, locally-runnable, designed to promote cleanly
+to Azure ML for production.
 
-Built with fully open-source, locally-runnable components. Designed to
-promote cleanly to Azure ML when production is ready.
+## 🏆 Leaderboard
 
----
+Head-to-head accuracy on the 169-question held-out eval set. Every
+model runs locally via [Ollama](https://ollama.com), zero-shot, no
+retrieval yet (RAG lands in v0.5.0 — expect meaningful lift).
+
+<!-- LEADERBOARD:START -->
+_No evaluation runs yet. Run `make sweep` to populate this leaderboard with real numbers._
+<!-- LEADERBOARD:END -->
+
+**Baselines:** random = `0.2500` · pass mark (Ontario) = `0.7500`
+
+Full per-model reports with per-domain breakdowns and confusion
+matrices live in [`results/runs/`](./results/runs).
+A live-updated markdown version is also kept at
+[`results/LEADERBOARD.md`](./results/LEADERBOARD.md).
 
 ## TL;DR
 
 - **What it does.** Takes a RIBO exam question in, returns A/B/C/D out.
-- **How.** Local open-source LLM (Qwen 2.5 7B via Ollama) + retrieval
-  over the official study corpus (RIB Act, Ontario Regulations, RIBO
-  By-Laws, OAP 2025).
+- **How.** Local open-source LLM via Ollama + retrieval over the
+  official study corpus (RIB Act, Ontario Regulations, RIBO By-Laws,
+  OAP 2025).
 - **Where it runs.** Today on a laptop. Tomorrow on Azure ML Managed
   Online Endpoints with one config switch.
-- **How we prove it works.** 169-question held-out eval set with
-  ground-truth answers, parsed directly from the official RIBO sample
-  materials. Accuracy, latency, and cost logged per release.
+- **How we prove it works.** Automated model sweep runs every
+  candidate against the 169-question eval set, writes per-question
+  traces, commits results, and pushes — one command, one leaderboard.
+
+## Run the whole sweep
+
+```bash
+ollama serve &                                  # one terminal
+make parse && make kb && make test              # first time only
+make sweep                                      # in another terminal
+```
+
+`make sweep` pulls, evaluates, commits, and pushes every candidate
+model from [`docs/MODELS.md`](./docs/MODELS.md). 60–90 min unattended
+on an M-series Mac. Ctrl+C is safe — each completed model is its own
+commit.
 
 ## Status
 

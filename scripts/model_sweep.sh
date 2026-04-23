@@ -90,12 +90,13 @@ evict_model() {
 
 refresh_leaderboard() {
     python -m ribo_agent.eval.compare --markdown > results/LEADERBOARD.md
+    python -m ribo_agent.eval.compare --readme >/dev/null
 }
 
 commit_and_push() {
     local model="$1"
     local accuracy="$2"
-    git add results/runs results/LEADERBOARD.md
+    git add results/runs results/LEADERBOARD.md README.md
     if git diff --cached --quiet; then
         warn "nothing to commit for $model"
         return 0
