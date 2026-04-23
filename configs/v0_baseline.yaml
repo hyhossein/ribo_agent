@@ -1,0 +1,28 @@
+# v0 baseline agent — zero-shot, no retrieval.
+# This file is scaffolding today; the agent that consumes it ships in v0.4.0.
+# Its purpose here is to lock in the config schema so every future release
+# edits YAML, not Python.
+
+name: v0_baseline
+description: >
+  Zero-shot Qwen 2.5 7B. No retrieval, no few-shot, no self-consistency.
+  Establishes the accuracy floor on the 169-question eval set.
+
+llm:
+  # Switch this one value to move from local dev to Azure ML:
+  #   backend: ollama   -> http://localhost:11434
+  #   backend: azureml  -> env AZUREML_ENDPOINT_URL / AZUREML_ENDPOINT_KEY
+  backend: ollama
+  model: qwen2.5:7b-instruct
+  base_url: http://localhost:11434
+  timeout_s: 120
+
+generation:
+  temperature: 0.0
+  max_tokens: 128
+  stop: ["</answer>", "\n\nQuestion"]
+
+storage:
+  # Resolved by src/ribo_agent/io/storage.py via the RIBO_STORAGE env var.
+  # Left unset here; the default is local (project root).
+  backend: env
