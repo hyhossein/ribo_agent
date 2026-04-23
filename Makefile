@@ -1,4 +1,4 @@
-.PHONY: help install parse kb test eval eval-all compare clean
+.PHONY: help install parse kb test eval eval-all sweep compare clean
 
 CONFIG ?= configs/v0_zeroshot_qwen25_7b.yaml
 
@@ -10,6 +10,7 @@ help:
 	@echo "  test               run pytest"
 	@echo "  eval CONFIG=..     run eval for a single config (default: Qwen 7B)"
 	@echo "  eval-all           run eval for every configs/v0_zeroshot_*.yaml"
+	@echo "  sweep              pull/eval/commit/push every default model"
 	@echo "  compare            print leaderboard of all runs in results/runs/"
 	@echo "  clean              remove derived artifacts (raw inputs stay)"
 
@@ -33,6 +34,9 @@ eval-all:
 		echo ">>> $$cfg"; \
 		python -m ribo_agent.eval.runner --config $$cfg || exit $$?; \
 	done
+
+sweep:
+	bash scripts/model_sweep.sh
 
 compare:
 	python -m ribo_agent.eval.compare

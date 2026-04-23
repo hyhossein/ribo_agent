@@ -1,11 +1,11 @@
 name: v0_zeroshot
-description: Zero-shot baseline using Llama 3.1 8B via local Ollama.
+description: Zero-shot baseline using Qwen 3 8B (newer than 2.5) via local Ollama.
 
 llm:
   backend: ollama
-  model: llama3.1:8b
+  model: qwen3:8b
   base_url: http://localhost:11434
-  timeout_s: 180
+  timeout_s: 120
 
 generation:
   temperature: 0.0

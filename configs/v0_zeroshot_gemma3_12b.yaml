@@ -1,9 +1,9 @@
 name: v0_zeroshot
-description: Zero-shot baseline using Llama 3.1 8B via local Ollama.
+description: Zero-shot baseline using Gemma 3 12B (Google, strong long-context) via local Ollama.
 
 llm:
   backend: ollama
-  model: llama3.1:8b
+  model: gemma3:12b
   base_url: http://localhost:11434
   timeout_s: 180
 

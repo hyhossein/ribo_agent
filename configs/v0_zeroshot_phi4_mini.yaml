@@ -1,11 +1,11 @@
 name: v0_zeroshot
-description: Zero-shot baseline using Llama 3.1 8B via local Ollama.
+description: Zero-shot baseline using Phi-4 Mini (3.8B, Microsoft 2025) via local Ollama.
 
 llm:
   backend: ollama
-  model: llama3.1:8b
+  model: phi4-mini
   base_url: http://localhost:11434
-  timeout_s: 180
+  timeout_s: 120
 
 generation:
   temperature: 0.0
