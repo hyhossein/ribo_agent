@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+.env
+*.egg-info/
+
+# data we generate (raw inputs are kept, derived artifacts are rebuilt)
+data/parsed/
+data/study_txt/
+data/kb/
+data/index/
+
+# local results, traces
+results/runs/
+results/*.json
+results/*.jsonl
+!results/.gitkeep
+
+# notebooks outputs (keep the notebook, rebuild outputs)
+# we actually want to keep outputs for EDA — leave this off for now
