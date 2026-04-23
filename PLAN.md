@@ -62,10 +62,16 @@ BGE-base-en-v1.5 embeddings. FAISS index. A retrieval-quality eval asking:
 for questions that cite a specific section, does top-k retrieval find it?
 Report recall@1/@5/@20, latency, memory.
 
-## Day 5 — Agent v0 and v1
+_This is deferred to v0.5.0. Day 4 shipped the zero-shot baseline instead
+to get first accuracy numbers on the board before investing in RAG._
 
-- **v0:** Claude Sonnet 4.6, zero-shot, no retrieval. Establishes the floor.
-- **v1:** + RAG over study docs.
+## Day 5 — Agent v0 and v1  (v0 shipped as v0.4.0)
+
+- **v0:** Qwen 2.5 7B (and comparable 7-9B open models) via local Ollama,
+  zero-shot, no retrieval. Establishes the floor. Shipped in v0.4.0 with
+  three configs (Qwen 2.5 7B, Llama 3.1 8B, Phi 3.5 3.8B) and a
+  leaderboard tool.
+- **v1:** + RAG over study docs. Ships next as v0.5.0.
 
 Eval harness scores the full 169-question held-out set. JSON traces per run
 for error analysis.

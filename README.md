@@ -32,9 +32,10 @@ promote cleanly to Azure ML when production is ready.
 | [v0.1.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.1.0) | Parsers, eval set, 35 tests | 169 MCQs in `data/parsed/` |
 | [v0.2.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.2.0) | CI/CD, LLM + storage interfaces, Azure ML stubs | 47 tests green on push |
 | [v0.3.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.3.0) | Manual-PDF extractor + study-doc chunker | 386 few-shot MCQs, 298 KB chunks, 64 tests |
-| v0.4.0 | Embeddings + retrieval evaluation | Recall@k metrics |
-| v0.5.0 | Baseline agent v0 + retrieval-augmented agent v1 | First accuracy number |
-| v0.6.0 | v2 (few-shot) + v3 (self-consistency) + full CI | Accuracy lift per variant |
+| [v0.3.1](https://github.com/hyhossein/ribo_agent/releases/tag/v0.3.1) | macOS LibreOffice binary discovery | `make kb` works on Mac |
+| [v0.4.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.4.0) | Zero-shot agent + eval harness + leaderboard | First accuracy & macro-F1 numbers |
+| v0.5.0 | RAG agent (BGE + FAISS retrieval) | Accuracy lift over v0.4.0 |
+| v0.6.0 | v2 (few-shot) + v3 (self-consistency) | Per-variant lift |
 | v1.0.0 | Final report, profiling, error analysis, Azure ML deployment recipe | End-to-end reproducible |
 
 See [`PLAN.md`](./PLAN.md) for the build plan and
@@ -88,7 +89,15 @@ ollama pull qwen2.5:7b-instruct
 # generate the eval set, the few-shot pool, and the KB
 make parse     # -> data/parsed/{sample_questions,practice_exam,manual_pool,eval,train}.jsonl
 make kb        # -> data/kb/chunks.jsonl (298 section-level chunks)
-make test      # pytest, 64 tests, <5s
+make test      # pytest, 81 tests, ~5s
+
+# Evaluation (requires Ollama running + the model pulled)
+ollama serve &
+ollama pull qwen2.5:7b-instruct
+
+make eval CONFIG=configs/v0_zeroshot_qwen25_7b.yaml    # ~15 min
+make eval-all                                           # every zero-shot config
+make compare                                            # leaderboard table
 ```
 
 Evaluation and agent runs land in v0.4.0+; see `PLAN.md`.

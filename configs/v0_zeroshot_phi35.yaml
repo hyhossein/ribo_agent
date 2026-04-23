@@ -1,0 +1,12 @@
+name: v0_zeroshot
+description: Zero-shot baseline using Phi 3.5 3.8B (the small, fast one).
+
+llm:
+  backend: ollama
+  model: phi3.5:3.8b
+  base_url: http://localhost:11434
+  timeout_s: 180
+
+generation:
+  temperature: 0.0
+  max_tokens: 256

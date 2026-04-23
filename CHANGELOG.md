@@ -6,6 +6,49 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-23
+
+First real accuracy numbers. Ships a zero-shot agent, a full eval
+harness, and per-run markdown reports so every release moves a number.
+
+### Added
+- `src/ribo_agent/agents/base.py` — `Agent` Protocol + `Prediction`
+  dataclass carrying qid, predicted/correct, latency, token counts.
+- `src/ribo_agent/agents/zeroshot.py` — `ZeroShotAgent` with a
+  four-tier answer extractor (tag, 'Answer: X', sole letter in tail,
+  any letter). Never guesses on ambiguous output; refusal rate is
+  first-class in metrics.
+- `src/ribo_agent/eval/metrics.py` — accuracy, macro-F1, micro-F1,
+  per-class P/R/F1, per-domain + per-cognitive-level accuracy,
+  confusion matrix with REFUSED column, latency p50/p90/mean.
+  `format_report()` emits markdown suitable for committing.
+- `src/ribo_agent/eval/runner.py` — CLI that takes a YAML config,
+  runs the agent on `data/parsed/eval.jsonl`, and writes
+  `results/runs/<ts>_<config>_<model>/{predictions.jsonl,metrics.json,report.md}`.
+  Live progress bar with running accuracy and ETA.
+- `src/ribo_agent/eval/compare.py` — leaderboard table across every
+  run in `results/runs/` (plain text or markdown).
+- Configs: `v0_zeroshot_qwen25_7b.yaml`, `v0_zeroshot_llama31_8b.yaml`,
+  `v0_zeroshot_phi35.yaml`.
+- Makefile: `eval CONFIG=...`, `eval-all`, `compare`.
+- 17 new tests (81 total) using a `MockLLM` so CI runs the full agent
+  path in ms without an Ollama server.
+
+### Notes
+- LLM backend is Ollama running locally; swap `backend: ollama` →
+  `backend: azureml` in the config to route at Azure ML Managed
+  Endpoints without code changes.
+- Retrieval lands in v0.5.0; zero-shot is the floor RAG lift will be
+  measured against.
+
+## [0.3.1] — 2026-04-23
+
+### Fixed
+- `src/ribo_agent/kb/ingest.py` now discovers the LibreOffice binary
+  on macOS (the Homebrew cask ships it as `soffice`, not
+  `libreoffice`). Probes PATH + known absolute paths; clear error if
+  neither is present.
+
 ## [0.3.0] — 2026-04-23
 
 Knowledge-base build and full training pool. No LLM yet; that lands
@@ -85,7 +128,9 @@ First usable slice. Everything from EDA through a clean eval set.
 - 35 pytest unit tests covering both parsers, including parametrized
   regression tests for the two EDA-identified traps.
 
-[Unreleased]: https://github.com/hyhossein/ribo_agent/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/hyhossein/ribo_agent/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/hyhossein/ribo_agent/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/hyhossein/ribo_agent/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/hyhossein/ribo_agent/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/hyhossein/ribo_agent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hyhossein/ribo_agent/releases/tag/v0.1.0
