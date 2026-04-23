@@ -27,8 +27,8 @@ benchmarks. See [`PLAN.md`](./PLAN.md) for the 7-day breakdown.
 
 | Day | Focus | Status |
 | :-- | :---- | :----- |
-| 1   | EDA — understand the data before writing any system | in progress |
-| 2   | Parsers & eval set | — |
+| 1   | EDA — understand the data before writing any system | ✅ done |
+| 2   | Parsers & eval set | ✅ done (169 MCQs, 35 tests) |
 | 3   | Knowledge-base ingestion & chunking | — |
 | 4   | Embeddings + retrieval eval | — |
 | 5   | Zero-shot baseline (v0) and simple RAG (v1) | — |
@@ -52,7 +52,19 @@ results/           # eval results and reports
 
 ## Running locally
 
-Requirements and installation will be finalized on Day 2 once the parser
-module lands. Today (Day 1) the only requirements are `poppler-utils`,
-`libreoffice-core`, Python 3.11+, and a few standard libraries — see
-`notebooks/day1_eda.ipynb` for the exact imports used.
+Requires `poppler-utils` and Python 3.11+. Inside an activated conda env:
+
+```bash
+make install       # pip install -e . plus declared deps
+make parse         # parse both PDFs -> data/parsed/*.jsonl
+make test          # run pytest (currently 35 tests, ~0.4s)
+```
+
+After `make parse` you will have:
+
+```
+data/parsed/sample_questions.jsonl    # 79 MCQs with Content Domain metadata
+data/parsed/practice_exam.jsonl       # 90 MCQs from the X-grid-keyed PDF
+```
+
+Day 3 adds the manual extractor and the study-doc chunker.
