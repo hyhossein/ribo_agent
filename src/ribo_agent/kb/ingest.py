@@ -8,14 +8,42 @@ Supports two formats:
 Cached output lives in data/interim/study_txt/ keyed by the source
 filename. Rebuilds are idempotent: if the source hasn't changed since
 the cached copy, we reuse it.
+
+LibreOffice binary discovery:
+  - Linux (Homebrew or apt): `libreoffice` is on PATH
+  - macOS (Homebrew cask):  the binary is `soffice`, typically at
+      /opt/homebrew/bin/soffice (Apple Silicon) or
+      /Applications/LibreOffice.app/Contents/MacOS/soffice
+  - We probe candidates in order and use the first that works.
 """
 from __future__ import annotations
 
 import hashlib
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+
+_SOFFICE_CANDIDATES = [
+    "libreoffice",                                                     # linux
+    "soffice",                                                         # macos homebrew symlink
+    "/opt/homebrew/bin/soffice",                                       # apple silicon brew
+    "/usr/local/bin/soffice",                                          # intel mac brew
+    "/Applications/LibreOffice.app/Contents/MacOS/soffice",            # mac .app bundle
+]
+
+
+def _find_soffice() -> str:
+    for name in _SOFFICE_CANDIDATES:
+        path = shutil.which(name) if "/" not in name else (name if Path(name).exists() else None)
+        if path:
+            return path
+    raise RuntimeError(
+        "LibreOffice not found. On macOS: `brew install --cask libreoffice`. "
+        "On Ubuntu: `sudo apt-get install -y libreoffice`."
+    )
 
 
 def _sha256(path: Path) -> str:
@@ -39,12 +67,11 @@ def doc_to_text(src: Path, cache_dir: Path | None = None) -> str:
         if cached.exists():
             return cached.read_text(encoding="utf-8")
 
+    soffice = _find_soffice()
     with tempfile.TemporaryDirectory() as tmp:
-        # libreoffice --headless --convert-to txt writes
-        # `<stem>.txt` into --outdir
         subprocess.run(
             [
-                "libreoffice",
+                soffice,
                 "--headless",
                 "--convert-to",
                 "txt:Text (encoded):UTF8",
