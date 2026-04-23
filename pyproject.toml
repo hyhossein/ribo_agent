@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ribo_agent"
+version = "0.1.0"
+description = "Local, open-source agent for the RIBO Level 1 licensing exam"
+requires-python = ">=3.11"
+# Dependencies are installed manually via pip into the `ribo` conda env.
+# Listing them here too for documentation + reproducibility.
+dependencies = [
+    "pymupdf>=1.24",
+    "pdfplumber>=0.11",
+    "pypdf>=5.0",
+    "sentence-transformers>=3.0",
+    "faiss-cpu>=1.8",
+    "numpy>=1.26",
+    "llama-cpp-python>=0.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "jupyter"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
