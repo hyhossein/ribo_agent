@@ -1,0 +1,12 @@
+# CODEOWNERS — https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/about-code-owners
+#
+# Every PR gets @hyhossein as a reviewer by default. Replace @CEO-HANDLE with
+# the actual GitHub username when the CEO is added as a collaborator.
+
+*                  @hyhossein
+
+# High-level architecture, plan, and release notes — exec visibility.
+PLAN.md            @hyhossein @CEO-HANDLE
+CHANGELOG.md       @hyhossein @CEO-HANDLE
+README.md          @hyhossein @CEO-HANDLE
+docs/              @hyhossein @CEO-HANDLE
