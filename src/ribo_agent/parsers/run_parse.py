@@ -8,7 +8,7 @@ import argparse
 import json
 from pathlib import Path
 
-from . import sample
+from . import practice, sample
 
 ROOT = Path(__file__).resolve().parents[3]
 RAW_Q = ROOT / "data" / "raw" / "questions"
@@ -26,18 +26,30 @@ def run_sample() -> int:
     pdf = RAW_Q / "Sample-Questions-RIBO-Level-1-Exam (1).pdf"
     qs = sample.parse(pdf)
     _write_jsonl(qs, OUT / "sample_questions.jsonl")
-    print(f"sample_questions: {len(qs)} questions -> {OUT / 'sample_questions.jsonl'}")
+    print(f"sample_questions: {len(qs)} -> {OUT / 'sample_questions.jsonl'}")
+    return len(qs)
+
+
+def run_practice() -> int:
+    pdf = RAW_Q / "695993459-Practise-RIBO-Exam.pdf"
+    qs = practice.parse(pdf)
+    _write_jsonl(qs, OUT / "practice_exam.jsonl")
+    print(f"practice_exam:    {len(qs)} -> {OUT / 'practice_exam.jsonl'}")
     return len(qs)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("target", choices=["sample", "all"], default="all", nargs="?")
+    ap.add_argument(
+        "target", choices=["sample", "practice", "all"], default="all", nargs="?"
+    )
     args = ap.parse_args()
 
     if args.target in ("sample", "all"):
         run_sample()
-    # additional targets (practice, manual) land on day 3
+    if args.target in ("practice", "all"):
+        run_practice()
+    # manual extractor lands on day 3
 
 
 if __name__ == "__main__":
