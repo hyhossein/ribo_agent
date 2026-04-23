@@ -18,7 +18,11 @@ model runs locally via [Ollama](https://ollama.com), zero-shot, no
 retrieval yet (RAG lands in v0.5.0 — expect meaningful lift).
 
 <!-- LEADERBOARD:START -->
-_No evaluation runs yet. Run `make sweep` to populate this leaderboard with real numbers._
+|  | Model | Accuracy | Macro-F1 | Latency (ms) |
+| :--- | :--- | ---: | ---: | ---: |
+| 🥇 | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
+
+_Updated 2026-04-23 23:41 UTC · 169-question eval set · zero-shot, no RAG_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · pass mark (Ontario) = `0.7500`
