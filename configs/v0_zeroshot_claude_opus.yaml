@@ -1,0 +1,11 @@
+name: v0_zeroshot
+description: Zero-shot baseline using Claude Opus 4.6 via Anthropic API.
+
+llm:
+  backend: anthropic
+  api_key: ${ANTHROPIC_API_KEY}
+  model: claude-opus-4-6-20250515
+
+generation:
+  temperature: 0.0
+  max_tokens: 256

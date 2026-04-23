@@ -44,4 +44,8 @@ def make_client(cfg: dict[str, Any]) -> LLMClient:
             timeout_s=cfg.get("timeout_s", 120.0),
         )
 
+    if backend == "anthropic":
+        from .anthropic_client import AnthropicClient
+        return AnthropicClient(cfg)
+
     raise ValueError(f"unknown llm.backend: {backend!r}")

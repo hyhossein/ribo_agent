@@ -1,0 +1,11 @@
+name: v0_zeroshot
+description: Zero-shot baseline using GPT-4o via OpenAI API.
+
+llm:
+  backend: openai
+  api_key: ${OPENAI_API_KEY}
+  model: gpt-4o
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
