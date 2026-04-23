@@ -20,3 +20,4 @@ results/*.jsonl
 # notebooks outputs (keep the notebook, rebuild outputs)
 # we actually want to keep outputs for EDA — leave this off for now
 *.egg-info/
+data/interim/

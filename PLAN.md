@@ -34,11 +34,27 @@ Turn the questions into clean, versioned JSONL. Two parsers:
 Unit tests per parser. Dedup via stem fingerprints. Confirm zero leakage
 between eval set and few-shot pool.
 
-## Day 3 — KB ingestion & chunking
+## Day 3 — KB ingestion & chunking  ✓ shipped as v0.3.0
 
-Convert `.doc` → text, chunk all study docs by section/article (not token
-windows — exam questions cite section numbers verbatim). Preserve citation
-trail. Tests + size distribution plot.
+Turn the raw study corpus into retrieval-ready chunks:
+
+- LibreOffice headless converts the three `.doc` regulations + the
+  `.doc` RIB Act to UTF-8 text. SHA-keyed cache so reruns skip the
+  slow conversion.
+- Four per-format splitters: regulations (`1.` / `5.1` / `7.2`), RIB
+  Act (title-on-prior-line), RIBO By-Laws (ARTICLE + x.y), OAP
+  (`Section N - Title`).
+- Size normaliser merges tiny neighbours and splits oversize blocks
+  on paragraph → sentence → character with small overlap.
+- 298 chunks across 8 sources. Every chunk carries a citation string
+  suitable for quoting in an answer.
+- Manual-PDF parser added alongside: 386 MCQs extracted via PyMuPDF
+  bold-font detection (Calibri-Bold / flag bit 4). Dedup +
+  fingerprint leakage check prove 0 overlap with the 169-Q eval set.
+
+Tests: 64 total (was 47). New ones cover bold-answer detection
+fingerprint stability, per-format splitter invariants, chunk size
+bounds.
 
 ## Day 4 — Embeddings & retrieval eval
 

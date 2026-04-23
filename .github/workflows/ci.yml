@@ -25,7 +25,7 @@ jobs:
       - name: Install system deps
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq poppler-utils libreoffice-core
+          sudo apt-get install -y -qq poppler-utils libreoffice
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,14 +42,21 @@ jobs:
         run: |
           python -m ribo_agent.parsers.run_parse all
 
+      - name: Build KB (smoke)
+        run: |
+          python -m ribo_agent.kb.build_kb
+
       - name: Run tests
         run: |
           pytest tests -v
 
-      - name: Upload parsed JSONL as artifact
+      - name: Upload parsed JSONL and KB as artifacts
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
-          name: parsed-eval-set
-          path: data/parsed/*.jsonl
+          name: data-artifacts
+          path: |
+            data/parsed/*.jsonl
+            data/kb/chunks.jsonl
+            data/kb/summary.json
           retention-days: 30

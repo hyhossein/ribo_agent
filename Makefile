@@ -1,9 +1,10 @@
-.PHONY: help install test parse clean
+.PHONY: help install parse kb test clean
 
 help:
 	@echo "Targets:"
 	@echo "  install   pip install -e . (once, inside activated conda env)"
 	@echo "  parse     parse all question PDFs -> data/parsed/*.jsonl"
+	@echo "  kb        build knowledge base   -> data/kb/chunks.jsonl"
 	@echo "  test      run pytest"
 	@echo "  clean     remove derived artifacts (raw inputs stay)"
 
@@ -12,6 +13,9 @@ install:
 
 parse:
 	python -m ribo_agent.parsers.run_parse all
+
+kb:
+	python -m ribo_agent.kb.build_kb
 
 test:
 	pytest tests
