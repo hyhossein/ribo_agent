@@ -22,7 +22,7 @@ retrieval yet (RAG lands in v0.5.0 — expect meaningful lift).
 | :--- | :--- | ---: | ---: | ---: |
 | 🥇 | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-23 23:41 UTC · 169-question eval set · zero-shot, no RAG_
+_Updated 2026-04-23 23:43 UTC · 169-question eval set · zero-shot, no RAG_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · pass mark (Ontario) = `0.7500`
