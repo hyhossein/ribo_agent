@@ -1,0 +1,17 @@
+name: v1_wiki
+description: >
+  Karpathy LLM-Wiki pattern: pre-compile the study corpus into a
+  structured knowledge wiki, then answer questions against the wiki.
+  Uses Claude Opus 4.
+
+agent: wiki
+
+llm:
+  backend: anthropic
+  api_key: ${ANTHROPIC_API_KEY}
+  model: claude-opus-4-20250514
+
+generation:
+  temperature: 0.0
+  max_tokens: 512
+  wiki_max_tokens: 4096

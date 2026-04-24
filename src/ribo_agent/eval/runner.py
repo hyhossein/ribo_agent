@@ -54,6 +54,32 @@ def _safe_name(model: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", model).strip("_")
 
 
+def _make_agent(config: dict, llm):
+    """Build the agent specified by config['agent'] (default: zeroshot)."""
+    agent_type = config.get("agent", "zeroshot")
+    gen_cfg = config.get("generation", {})
+    temp = gen_cfg.get("temperature", 0.0)
+    max_tok = gen_cfg.get("max_tokens", 256)
+
+    if agent_type == "zeroshot":
+        return ZeroShotAgent(llm, temperature=temp, max_tokens=max_tok)
+
+    if agent_type == "wiki":
+        from ..agents.wiki_agent import WikiAgent
+        return WikiAgent(
+            llm, temperature=temp, max_tokens=max_tok,
+            wiki_max_tokens=gen_cfg.get("wiki_max_tokens", 4096),
+        )
+
+    if agent_type == "rewrite":
+        from ..agents.wiki_agent import WikiAgent
+        from ..agents.rewrite_agent import RewriteAgent
+        wiki = WikiAgent(llm, temperature=temp, max_tokens=max_tok)
+        return RewriteAgent(llm, wiki_agent=wiki, temperature=temp, max_tokens=max_tok)
+
+    raise ValueError(f"unknown agent type: {agent_type!r}")
+
+
 def run_eval(
     config: dict,
     *,
@@ -64,11 +90,7 @@ def run_eval(
     gen_cfg = config.get("generation", {})
     llm = make_client(llm_cfg)
 
-    agent = ZeroShotAgent(
-        llm,
-        temperature=gen_cfg.get("temperature", 0.0),
-        max_tokens=gen_cfg.get("max_tokens", 256),
-    )
+    agent = _make_agent(config, llm)
 
     mcqs = _load_eval()
     if limit:
