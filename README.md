@@ -16,7 +16,7 @@ to Azure ML for production.
 
 Seven agent configurations tested on 169 held-out exam questions.
 Progression: open-source local (49%) → frontier zero-shot (79%) →
-knowledge-augmented (89%) → multi-model voting (89.35%).
+knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
@@ -31,7 +31,7 @@ knowledge-augmented (89%) → multi-model voting (89.35%).
 | 8. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 9. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 21:26 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 21:28 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -176,18 +176,19 @@ likely wrong.
  49.1%  ──►  Phi-4 Mini 3.8B, zero-shot, local         ($0)
  59.8%  ──►  Qwen 2.5 7B, zero-shot, local              ($0)
  78.7%  ──►  Claude Opus 4, zero-shot, API               ($1)
- 88.2%  ──►  Claude Opus 4 + Ensemble v3                 ($10)  ◄── more complex, worse
+ 86.4%  ──►  Claude Opus 4 + Elimination prompt          ($1)
+ 88.2%  ──►  Claude Opus 4 + Ensemble v3                 ($10)
  88.8%  ──►  Claude Opus 4 + Rewrite + Wiki              ($8)
- 89.4%  ──►  Confidence voting (multi-model ensemble)    ($0*)  ◄── best result
+ 89.4%  ──►  Confidence voting (4-vs-1 unanimous)        ($0*)
+ 91.7%  ──►  3-way majority vote (3 strategies)          ($0*)  ◄── best result
 ```
 
 *\*No additional API calls — computed from existing prediction sets.*
 
-**The dominant lever is knowledge access, not model size or inference
-compute.** The +10pp wiki lift is larger than the cost of switching
-from a free local model to a $1/query frontier model. The final +0.6pp
-from multi-model voting shows that cross-architecture consensus
-provides a small but safe additional signal.
+**Three different prompting strategies (step-by-step, elimination,
+confidence-gated) have different failure modes. Simple majority vote
+across all three recovers questions that any two get right, crossing
+the 90% threshold at 91.72%.**
 
 ---
 
@@ -257,7 +258,34 @@ Question ──► Rewrite + Wiki ──► Primary answer (Opus)
 ```
 
 Trust the wiki agent unless every independent model disagrees.
-Triggered on 4/169 questions. Net +1 correct. **89.35% — current best.**
+Triggered on 4/169 questions. Net +1 correct. **89.35%.**
+
+### v5: Elimination prompt
+
+```
+Question + Wiki  ──►  "Which option is DEFINITELY wrong?"
+                      ──►  Eliminate 1
+                      ──►  "Of remaining 3, which is wrong?"
+                      ──►  Eliminate 1
+                      ──►  "Of remaining 2, which is correct? Cite regulation."
+                      ──►  A/B/C/D
+```
+
+Different reasoning path: eliminate wrong options instead of selecting
+the right one. 86.39% alone, but gets 9 questions right that the wiki
+agent misses — crucial for voting.
+
+### v6: 3-way majority vote (best result)
+
+```
+Question  ──►  v2 (Rewrite+Wiki)   ──► Answer 1 ─┐
+          ──►  v3 (Ensemble)       ──► Answer 2 ─┤──► Majority vote ──► Final
+          ──►  v5 (Elimination)    ──► Answer 3 ─┘
+```
+
+Three different reasoning strategies with different failure modes.
+Simple majority vote recovers questions any two of three get right.
+**155/169 = 91.72% — current best. Crosses the 90% threshold.**
 
 ---
 
@@ -265,12 +293,13 @@ Triggered on 4/169 questions. Net +1 correct. **89.35% — current best.**
 
 | Model | Type | Size | Best accuracy | Agent |
 | :--- | :--- | :--- | ---: | :--- |
-| Multi-model ensemble | Hybrid | — | **89.35%** | Confidence voting (v4) |
-| Claude Opus 4 | Commercial | — | 88.76% | Rewrite+Wiki (v2) |
-| Claude Opus 4 | Commercial | — | 78.70% | Zero-shot (v0) |
-| Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | Zero-shot (v0) |
-| Claude Sonnet 4 | Commercial | — | 52.07% | Zero-shot (v0) |
-| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | Zero-shot (v0) |
+| 3-way majority vote | Hybrid | — | **91.72%** | v6: wiki + elimination + ensemble |
+| Multi-model consensus | Hybrid | — | 89.35% | v4: confidence voting |
+| Claude Opus 4 | Commercial | — | 88.76% | v2: rewrite+wiki |
+| Claude Opus 4 | Commercial | — | 78.70% | v0: zero-shot |
+| Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | v0: zero-shot |
+| Claude Sonnet 4 | Commercial | — | 52.07% | v0: zero-shot |
+| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | v0: zero-shot |
 
 Additional open-source models (Llama 3.1, Qwen 3, Gemma 3,
 DeepSeek-R1) configured but not yet evaluated. See
