@@ -8,5 +8,5 @@
 | 6. | **Sonnet 4** | 169 | `0.5207` | `0.5351` | 0.053 | 6253 |
 | 7. | **Phi-4 Mini 3.8B** | 169 | `0.4911` | `0.4982` | 0.035 | 25095 |
 
-_Updated 2026-04-24 20:06 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 20:08 UTC · 169-question eval set · open-source + commercial models_
 
