@@ -20,11 +20,11 @@ retrieval yet (RAG lands in v0.5.0 — expect meaningful lift).
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **claude-opus-4-20250514** | `0.7870` | `0.7996` | 7296 |
+| 🥇 | **claude-opus-4-20250514** | `0.7751` | `0.7866` | 7294 |
 | 🥈 | **claude-sonnet-4-20250514** | `0.5207` | `0.5351` | 6253 |
 | 🥉 | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-23 23:59 UTC · 169-question eval set · zero-shot, no RAG_
+_Updated 2026-04-24 00:01 UTC · 169-question eval set · zero-shot, no RAG_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · pass mark (Ontario) = `0.7500`
