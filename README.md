@@ -16,7 +16,15 @@ Claude, OpenAI). Designed to promote to Azure ML for production.
 ## 🏆 Leaderboard
 
 <!-- LEADERBOARD:START -->
-_No evaluation runs yet. Run `make sweep` to populate this leaderboard with real numbers._
+|  | Model | Accuracy | Macro-F1 | Latency (ms) |
+| :--- | :--- | ---: | ---: | ---: |
+| 🥇 | **wiki_claude-opus-4-20250514** | `0.8817` | `0.8835` | 29626 |
+| 🥈 | **claude-opus-4-20250514** | `0.7870` | `0.8031` | 7396 |
+| 🥉 | **Qwen 2.5 7B Instruct** | `0.5976` | `0.6085` | 41979 |
+| 4. | **claude-sonnet-4-20250514** | `0.5207` | `0.5351` | 6253 |
+| 5. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
+
+_Updated 2026-04-24 13:30 UTC · 169-question eval set · zero-shot, no RAG_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
