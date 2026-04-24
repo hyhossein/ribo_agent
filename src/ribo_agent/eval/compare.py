@@ -73,7 +73,10 @@ def _latest_per_model(rows: list[dict]) -> list[dict]:
     """Deduplicate: keep only the most recent run per model."""
     by_model: dict[str, dict] = {}
     for r in rows:
-        key = r["model_raw"]
+        # Use config prefix + model so different agent types don't collapse
+        parts = r["run"].split("_")
+        config_prefix = "_".join(parts[1:3]) if len(parts) > 3 else "v0_zeroshot"
+        key = f"{config_prefix}_{r['model_raw']}"
         existing = by_model.get(key)
         if existing is None or r["timestamp"] > existing["timestamp"]:
             by_model[key] = r
