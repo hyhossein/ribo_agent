@@ -24,7 +24,7 @@ to Azure ML for production.
 | 5. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 6. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 18:59 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 19:02 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
