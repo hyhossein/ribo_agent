@@ -24,7 +24,7 @@ Claude, OpenAI). Designed to promote to Azure ML for production.
 | 4. | **claude-sonnet-4-20250514** | `0.5207` | `0.5351` | 6253 |
 | 5. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 15:26 UTC · 169-question eval set · zero-shot, no RAG_
+_Updated 2026-04-24 15:28 UTC · 169-question eval set · zero-shot, no RAG_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
