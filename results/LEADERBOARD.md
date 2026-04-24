@@ -1,10 +1,10 @@
 |  | Model | n | Accuracy | Macro-F1 | Refusal | Latency mean (ms) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| 🥇 | **wiki_claude-opus-4-20250514** | 169 | `0.8817` | `0.8835` | 0.012 | 29626 |
+| 🥇 | **wiki_claude-opus-4-20250514** | 169 | `0.8876` | `0.8869` | 0.000 | 20399 |
 | 🥈 | **claude-opus-4-20250514** | 169 | `0.7870` | `0.8031` | 0.053 | 7396 |
 | 🥉 | **Qwen 2.5 7B Instruct** | 169 | `0.5976` | `0.6085` | 0.035 | 41979 |
 | 4. | **claude-sonnet-4-20250514** | 169 | `0.5207` | `0.5351` | 0.053 | 6253 |
 | 5. | **Phi-4 Mini 3.8B** | 169 | `0.4911` | `0.4982` | 0.035 | 25095 |
 
-_Updated 2026-04-24 13:56 UTC · 169-question eval set · zero-shot, no RAG_
+_Updated 2026-04-24 13:58 UTC · 169-question eval set · zero-shot, no RAG_
 
