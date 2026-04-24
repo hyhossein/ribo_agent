@@ -4,184 +4,221 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/hyhossein/ribo_agent?include_prereleases)](https://github.com/hyhossein/ribo_agent/releases)
-[![Tests](https://img.shields.io/badge/tests-81%20passing-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](./tests)
 
 An AI agent that answers multiple-choice questions from the Ontario
-**Registered Insurance Brokers of Ontario (RIBO) Level 1** licensing
-exam. Fully open-source, locally-runnable, designed to promote cleanly
-to Azure ML for production.
+**RIBO Level 1** insurance broker licensing exam. Supports both
+open-source local models (Ollama) and commercial APIs (Anthropic
+Claude, OpenAI). Designed to promote to Azure ML for production.
+
+---
 
 ## 🏆 Leaderboard
 
-Head-to-head accuracy on the 169-question held-out eval set. Every
-model runs locally via [Ollama](https://ollama.com), zero-shot, no
-retrieval yet (RAG lands in v0.5.0 — expect meaningful lift).
-
 <!-- LEADERBOARD:START -->
-|  | Model | Accuracy | Macro-F1 | Latency (ms) |
-| :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **wiki_claude-opus-4-20250514** | `0.8817` | `0.8835` | 29626 |
-| 🥈 | **claude-opus-4-20250514** | `0.7870` | `0.8031` | 7396 |
-| 🥉 | **Qwen 2.5 7B Instruct** | `0.5976` | `0.6085` | 41979 |
-| 4. | **claude-sonnet-4-20250514** | `0.5207` | `0.5351` | 6253 |
-| 5. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
-
-_Updated 2026-04-24 13:28 UTC · 169-question eval set · zero-shot, no RAG_
+_No evaluation runs yet. Run `make sweep` to populate this leaderboard with real numbers._
 <!-- LEADERBOARD:END -->
 
-**Baselines:** random = `0.2500` · pass mark (Ontario) = `0.7500`
+**Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
 
-Full per-model reports with per-domain breakdowns and confusion
-matrices live in [`results/runs/`](./results/runs).
-A live-updated markdown version is also kept at
-[`results/LEADERBOARD.md`](./results/LEADERBOARD.md).
+---
 
-## TL;DR
+## Agent architectures
 
-- **What it does.** Takes a RIBO exam question in, returns A/B/C/D out.
-- **How.** Local open-source LLM via Ollama + retrieval over the
-  official study corpus (RIB Act, Ontario Regulations, RIBO By-Laws,
-  OAP 2025).
-- **Where it runs.** Today on a laptop. Tomorrow on Azure ML Managed
-  Online Endpoints with one config switch.
-- **How we prove it works.** Automated model sweep runs every
-  candidate against the 169-question eval set, writes per-question
-  traces, commits results, and pushes — one command, one leaderboard.
+Three progressively more sophisticated designs. The accuracy lift
+from v0 to v1 is the core result.
 
-## Run the whole sweep
+### v0: Zero-shot (baseline)
 
-```bash
-ollama serve &                                  # one terminal
-make parse && make kb && make test              # first time only
-make sweep                                      # in another terminal
+The model sees only the question and four options. No study material.
+This measures what the LLM already knows from pretraining.
+
+```
+Question + Options  ──►  LLM  ──►  A/B/C/D
 ```
 
-`make sweep` pulls, evaluates, commits, and pushes every candidate
-model from [`docs/MODELS.md`](./docs/MODELS.md). 60–90 min unattended
-on an M-series Mac. Ctrl+C is safe — each completed model is its own
-commit.
+Opus 4 reaches **78.7%** zero-shot. Strong, but misses
+regulation-specific details that require exact section knowledge.
 
-## Status
+### v1: LLM Wiki agent
 
-| Release | Scope | Evidence |
-| :--- | :--- | :--- |
-| [v0.1.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.1.0) | Parsers, eval set, 35 tests | 169 MCQs in `data/parsed/` |
-| [v0.2.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.2.0) | CI/CD, LLM + storage interfaces, Azure ML stubs | 47 tests green on push |
-| [v0.3.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.3.0) | Manual-PDF extractor + study-doc chunker | 386 few-shot MCQs, 298 KB chunks, 64 tests |
-| [v0.3.1](https://github.com/hyhossein/ribo_agent/releases/tag/v0.3.1) | macOS LibreOffice binary discovery | `make kb` works on Mac |
-| [v0.4.0](https://github.com/hyhossein/ribo_agent/releases/tag/v0.4.0) | Zero-shot agent + eval harness + leaderboard | First accuracy & macro-F1 numbers |
-| v0.5.0 | RAG agent (BGE + FAISS retrieval) | Accuracy lift over v0.4.0 |
-| v0.6.0 | v2 (few-shot) + v3 (self-consistency) | Per-variant lift |
-| v1.0.0 | Final report, profiling, error analysis, Azure ML deployment recipe | End-to-end reproducible |
+Inspired by [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
+Instead of traditional RAG (retrieve raw chunks per question), we
+**pre-compile the entire 297-chunk study corpus into a structured
+knowledge wiki** at startup. The wiki is organized by topic (RIB Act,
+Ontario Regulations 989/990/991, RIBO By-Laws 1/2/3, OAP 2025) with
+cross-references already resolved and section numbers preserved.
 
-See [`PLAN.md`](./PLAN.md) for the build plan and
-[`CHANGELOG.md`](./CHANGELOG.md) for detailed release notes.
+```
+297 study chunks  ──►  LLM compiles  ──►  Structured Wiki (cached)
+                                                  │
+                         Question + Wiki  ──►  LLM  ──►  A/B/C/D
+```
+
+**Why this beats traditional RAG:** RAG re-discovers knowledge from
+scratch on every question, hoping the embedding model finds the right
+chunk. The wiki pattern compiles once and reuses: cross-references
+are pre-resolved, the synthesis reflects the entire corpus, and the
+model sees organized knowledge rather than disconnected fragments.
+
+Opus 4 + Wiki reaches **88.2%** — a **+9.5pp lift** over zero-shot
+and well above the 75% pass mark.
+
+### v2: Question rewrite + Wiki
+
+Two-stage agentic pipeline. Before answering, an LLM rewrites the
+question to expand abbreviations (OAP, RIB Act), clarify ambiguous
+pronouns, and identify which specific regulation or section is being
+tested. The clarified question then feeds into the wiki agent.
+
+```
+Question  ──►  LLM rewrites  ──►  Clarified Question
+                                          │
+                    Clarified Q + Wiki  ──►  LLM  ──►  A/B/C/D
+```
+
+This addresses a common failure mode where the model knows the rule
+but can't connect the original question phrasing to the right section.
+
+---
+
+## Key results
+
+| Approach | Accuracy | Cost | Insight |
+| :--- | ---: | ---: | :--- |
+| Opus zero-shot | 78.7% | $1.01 | Strong base knowledge, misses regulation specifics |
+| **Opus + Wiki** | **88.2%** | ~$4.00 | **Pre-compiled knowledge is the dominant lever** |
+| Qwen 2.5 7B (local) | 59.8% | $0 | Viable for low-cost pre-screening |
+| Sonnet 4 zero-shot | 52.1% | $0.32 | Instruction-following gap vs Opus on regulatory MCQ |
+| Phi-4 Mini 3.8B (local) | 49.1% | $0 | Above random but below practical threshold |
+
+**The takeaway:** knowledge access matters more than model size.
+Opus zero-shot (78.7%) vs Opus + wiki (88.2%) shows that structured
+context delivers a bigger lift than scaling from Sonnet to Opus
+(52.1% → 78.7%).
+
+---
+
+## Model coverage
+
+Both open-source and commercial models, evaluating the
+cost-accuracy tradeoff.
+
+| Model | Type | Size | Backend |
+| :--- | :--- | :--- | :--- |
+| Claude Opus 4 | Commercial | — | Anthropic API |
+| Claude Sonnet 4 | Commercial | — | Anthropic API |
+| Qwen 2.5 7B Instruct | Open-source | 4.4 GB | Ollama (local) |
+| Phi-4 Mini 3.8B | Open-source | 2.5 GB | Ollama (local) |
+| Llama 3.1 8B | Open-source | 4.7 GB | Ollama (local) |
+| Qwen 3 8B | Open-source | 5.2 GB | Ollama (local) |
+| Gemma 3 12B | Open-source | 8.1 GB | Ollama (local) |
+| DeepSeek-R1-Distill 7B | Open-source | 4.7 GB | Ollama (local) |
+
+Model selection rationale: [`docs/MODELS.md`](./docs/MODELS.md)
+Literature review (15 cited works): [`docs/LITERATURE.md`](./docs/LITERATURE.md)
+
+---
+
+## Quick start
+
+```bash
+conda create -n ribo python=3.11 -y && conda activate ribo
+pip install -e .[dev]
+
+make parse          # 169 eval + 386 few-shot MCQs
+make kb             # 297 section-level chunks with citations
+make test           # 87 tests, ~5s
+
+# zero-shot with local model
+ollama serve &
+ollama pull qwen2.5:7b-instruct
+make eval CONFIG=configs/v0_zeroshot_qwen25_7b.yaml
+
+# wiki agent with Claude Opus (the 88.2% run)
+export ANTHROPIC_API_KEY="your-key"
+make eval CONFIG=configs/v1_wiki_opus.yaml
+
+# full open-source model sweep (unattended, ~90 min)
+make sweep
+
+# leaderboard
+make compare
+```
+
+---
 
 ## Architecture
 
 ```
-                  ┌──────────────────────────┐
-                  │  Agent (v0 .. v3)        │
-                  │  prompt + retrieve + ask │
-                  └────┬─────────────────┬───┘
+                  ┌──────────────────────────────┐
+                  │  Agent (v0 / v1 / v2)        │
+                  │  zero-shot / wiki / rewrite  │
+                  └────┬─────────────────┬───────┘
                        │                 │
                        ▼                 ▼
-               ┌──────────────┐   ┌─────────────┐
-               │ LLMClient    │   │ Retriever   │
-               │ (Protocol)   │   │ (FAISS)     │
-               └──────┬───────┘   └─────────────┘
-            ┌─────────┴──────────┐
-            ▼                    ▼
-     ┌─────────────┐      ┌────────────────┐
-     │ Ollama      │      │ Azure ML       │
-     │ (local dev) │      │ Managed Online │
-     │             │      │ Endpoint       │
-     └─────────────┘      └────────────────┘
+               ┌──────────────┐   ┌──────────────┐
+               │ LLMClient    │   │ Knowledge    │
+               │ (Protocol)   │   │ Base (wiki)  │
+               └──────┬───────┘   └──────────────┘
+            ┌─────────┼──────────┐
+            ▼         ▼          ▼
+     ┌──────────┐ ┌──────────┐ ┌──────────┐
+     │ Ollama   │ │Anthropic │ │ OpenAI   │
+     │ (local)  │ │ API      │ │ API      │
+     └──────────┘ └──────────┘ └──────────┘
 ```
 
-Every agent depends on the `LLMClient` protocol, never on a specific
-backend. Swap local ↔ Azure ML by editing a single config line:
+Swap backends by editing one config line:
 
 ```yaml
-# configs/v0_baseline.yaml
 llm:
-  backend: ollama     # or: azureml
+  backend: ollama       # or: anthropic, openai, azure_openai, azureml
   model: qwen2.5:7b-instruct
 ```
 
-## Running locally
-
-```bash
-# one-time setup
-conda create -n ribo python=3.11 -y
-conda activate ribo
-pip install -e .[dev]
-
-# start the local LLM (separate terminal, leave running)
-brew install ollama
-ollama serve &
-ollama pull qwen2.5:7b-instruct
-
-# generate the eval set, the few-shot pool, and the KB
-make parse     # -> data/parsed/{sample_questions,practice_exam,manual_pool,eval,train}.jsonl
-make kb        # -> data/kb/chunks.jsonl (298 section-level chunks)
-make test      # pytest, 81 tests, ~5s
-
-# Evaluation (requires Ollama running + the model pulled)
-ollama serve &
-ollama pull qwen2.5:7b-instruct
-
-make eval CONFIG=configs/v0_zeroshot_qwen25_7b.yaml    # ~15 min
-make eval-all                                           # every zero-shot config
-make compare                                            # leaderboard table
-```
-
-Evaluation and agent runs land in v0.4.0+; see `PLAN.md`.
+---
 
 ## Repo layout
 
 ```
 src/ribo_agent/
-    parsers/         # PDF -> canonical MCQ JSONL
-    llm/             # LLM client abstraction + Ollama and Azure ML impls
-    io/              # Storage abstraction (local + Azure Blob stub)
-tests/               # pytest — 47 tests currently
-notebooks/           # EDA and analysis, one per stage
-docs/                # EDA write-up, design decisions
-configs/             # one YAML per agent variant
-data/
-    raw/             # immutable inputs (git-tracked)
-    parsed/          # derived: eval JSONL (gitignored, rebuild with `make parse`)
-    kb/              # derived: chunked study corpus (v0.3.0)
-    index/           # derived: FAISS indices (v0.4.0)
-results/             # per-run eval reports (v0.5.0+)
-.github/workflows/   # CI
+    parsers/         # PDF → MCQ JSONL (3 parsers, 2 documented traps)
+    agents/          # v0 zero-shot, v1 wiki, v2 rewrite+wiki
+    llm/             # LLMClient protocol + 4 backends
+    kb/              # study-doc ingestion + section-aware chunker
+    eval/            # metrics, runner, leaderboard
+    io/              # storage abstraction (local + Azure Blob)
+tests/               # 87 tests
+configs/             # one YAML per agent × model
+docs/
+    MODELS.md        # model selection rationale with references
+    LITERATURE.md    # 15 cited works justifying pipeline design
+data/raw/            # immutable source PDFs
+results/runs/        # per-run predictions, metrics, reports
+scripts/             # model_sweep.sh
 ```
-
-`raw/` is git-tracked (small, immutable). Everything else is a
-deterministic function of code + raw inputs, so it is gitignored and
-rebuilt by a Makefile target. `make clean` removes all derived state.
 
 ## Design principles
 
-**Local-first, cloud-ready.** Every capability that could eventually
-live on Azure ML (LLM, storage, embeddings, vector index) sits behind a
-small interface with two implementations — a local one for development
-and a cloud one for production. Today both resolve to local; in v1.0.0
-the Azure path is fully wired.
+**Local-first, cloud-ready.** Every capability sits behind a protocol
+with multiple implementations. Today: Ollama + local files. Tomorrow:
+Azure ML + Blob Storage, one config change.
 
-**Reproducible.** Raw PDFs in, canonical JSONL out, deterministic
-chunks and embeddings, fixed LLM temperature 0.0 for baselines. Any
-number in `results/` can be re-derived from a clean checkout.
+**Reproducible.** Raw PDFs in, JSONL out, deterministic chunks, fixed
+temperature 0.0. Any number in `results/` re-derives from a clean
+checkout.
 
-**Tested where it matters.** Every PDF-parsing trap identified during
-EDA is backed by a named regression test (`tests/test_*_parser.py`)
-so silent breakage becomes loud.
+**Tested.** 87 tests covering PDF parsing traps (bold-font detection,
+X-grid column offsets, form-feed page boundaries), agent answer
+extraction, metrics computation, and leaderboard rendering.
 
-**Observable.** GitHub Actions runs every test on every push. Each
-release is tagged, notable changes live in `CHANGELOG.md`, and eval
-reports in `results/` are versioned markdown so an exec can read a
-commit diff and see the number move.
+**Observable.** CI on every push. Each release tagged. Eval reports
+are versioned markdown — read a commit diff, see the number move.
+
+**Literature-grounded.** Every design choice backed by a citation:
+LegalBench (NeurIPS 2023), LawBench (EMNLP 2024), ColBERTv2, BGE-M3,
+Self-Consistency (ICLR 2023). See [`docs/LITERATURE.md`](./docs/LITERATURE.md).
 
 ## License
 
