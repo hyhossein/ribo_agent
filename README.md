@@ -14,10 +14,14 @@ to Azure ML for production.
 
 ## 🏆 Leaderboard
 
+Seven agent configurations tested on 169 held-out exam questions.
+Progression: open-source local (49%) → frontier zero-shot (79%) →
+knowledge-augmented (89%) → multi-model voting (89.35%).
+
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **v4_confidence voting_multi-model** | `0.8935` | `0.8930` | - |
+| 🥇 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
 | 🥈 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
 | 🥉 | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
 | 4. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
@@ -25,13 +29,25 @@ to Azure ML for production.
 | 6. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 7. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 20:00 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 20:02 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
 
-Full per-model reports: [`results/runs/`](./results/runs) ·
-Live leaderboard: [`results/LEADERBOARD.md`](./results/LEADERBOARD.md)
+📄 **[Full Report (PDF)](./docs/RIBO_Agent_Final_Report.pdf)** —
+academic-style paper with charts, tables, error analysis, and the
+complete experimental methodology.
+
+| Document | What's inside |
+| :--- | :--- |
+| [Final Report (PDF)](./docs/RIBO_Agent_Final_Report.pdf) | 7-section paper: methodology, results, error analysis, insights |
+| [Mid-Submission Report](./docs/MID_SUBMISSION_REPORT.md) | Cost analysis, strategy decisions, experimental journey |
+| [Root Cause Analysis](./docs/ROOT_CAUSE_ANALYSIS.md) | Why accuracy plateaus at 89%: corpus coverage gap |
+| [Voting Analysis](./docs/VOTING_ANALYSIS.md) | 6 voting rules tested, honest results including negatives |
+| [Error Analysis](./docs/ERROR_ANALYSIS.md) | 19 wrong answers categorized into 3 failure patterns |
+
+Per-model detailed reports: [`results/runs/`](./results/runs) ·
+Machine-readable leaderboard: [`results/LEADERBOARD.md`](./results/LEADERBOARD.md)
 
 ---
 
@@ -126,6 +142,15 @@ exist in the source material.
 **Insight:** The bottleneck shifted from model capability to **corpus
 completeness**. The next improvement requires better data, not better
 algorithms.
+
+> **A note on the exam materials.** The RIBO Level 1 exam asks
+> questions about homeowners insurance, Freezer Foods endorsements,
+> Fine Arts coverage, and snowmobile forms. The official study
+> materials contain exactly zero pages about any of these topics. We
+> built an agent that perfectly learned everything it was given to
+> study, and then the exam tested it on material from a textbook it
+> never received. If there is a more fitting metaphor for the current
+> state of AI evaluation, we have not found it.
 
 ### Step 7: Multi-model confidence voting
 
@@ -248,21 +273,6 @@ Triggered on 4/169 questions. Net +1 correct. **89.35% — current best.**
 Additional open-source models (Llama 3.1, Qwen 3, Gemma 3,
 DeepSeek-R1) configured but not yet evaluated. See
 [`docs/MODELS.md`](./docs/MODELS.md) for the selection rationale.
-
----
-
-## Documentation
-
-| Document | Description |
-| :--- | :--- |
-| [`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) | Full experimental report with cost analysis |
-| [`docs/ROOT_CAUSE_ANALYSIS.md`](./docs/ROOT_CAUSE_ANALYSIS.md) | Why accuracy plateaus: corpus gap analysis |
-| [`docs/VOTING_ANALYSIS.md`](./docs/VOTING_ANALYSIS.md) | 6 voting rules tested with honest results |
-| [`docs/ERROR_ANALYSIS.md`](./docs/ERROR_ANALYSIS.md) | 19 wrong answers categorized by failure pattern |
-| [`docs/LITERATURE.md`](./docs/LITERATURE.md) | 15 cited works justifying pipeline design |
-| [`docs/MODELS.md`](./docs/MODELS.md) | Evidence-based model selection rationale |
-| [`PLAN.md`](./PLAN.md) | Build plan and release schedule |
-| [`CHANGELOG.md`](./CHANGELOG.md) | Detailed release notes |
 
 ---
 

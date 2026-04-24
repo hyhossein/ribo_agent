@@ -1,6 +1,6 @@
 |  | Model | n | Accuracy | Macro-F1 | Refusal | Latency mean (ms) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| 🥇 | **v4_confidence voting_multi-model** | 169 | `0.8935` | `0.8930` | 0.000 | - |
+| 🥇 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | 169 | `0.8935` | `0.8930` | 0.000 | - |
 | 🥈 | **Rewrite+Wiki + Opus 4** | 169 | `0.8876` | `0.8869` | 0.000 | 20399 |
 | 🥉 | **Ensemble + Opus 4** | 169 | `0.8817` | `0.8766` | 0.000 | 51512 |
 | 4. | **Opus 4** | 169 | `0.7870` | `0.8031` | 0.053 | 7396 |
@@ -8,5 +8,5 @@
 | 6. | **Sonnet 4** | 169 | `0.5207` | `0.5351` | 0.053 | 6253 |
 | 7. | **Phi-4 Mini 3.8B** | 169 | `0.4911` | `0.4982` | 0.035 | 25095 |
 
-_Updated 2026-04-24 20:00 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 20:02 UTC · 169-question eval set · open-source + commercial models_
 

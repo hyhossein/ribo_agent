@@ -62,6 +62,8 @@ def _collect() -> list[dict]:
 
 
 _AGENT_PREFIXES = [
+    "v4_confidence_voting",
+    "v4_confidence",
     "v3_ensemble",
     "v2_rewrite_wiki",
     "v1_wiki",
@@ -97,6 +99,7 @@ _MODEL_PRETTY = {
     "mistral_7b-instruct": "Mistral 7B",
     "claude-opus-4-20250514": "Opus 4",
     "claude-sonnet-4-20250514": "Sonnet 4",
+    "multi-model": "Opus 4 + Phi-4 + Qwen 7B",
 }
 
 _AGENT_PRETTY = {
@@ -104,6 +107,8 @@ _AGENT_PRETTY = {
     "v1_wiki": "Wiki +",
     "v2_rewrite_wiki": "Rewrite+Wiki +",
     "v3_ensemble": "Ensemble +",
+    "v4_confidence_voting": "Confidence Voting:",
+    "v4_confidence": "Confidence Voting:",
 }
 
 
