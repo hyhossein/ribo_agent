@@ -77,6 +77,15 @@ def _make_agent(config: dict, llm):
         wiki = WikiAgent(llm, temperature=temp, max_tokens=max_tok)
         return RewriteAgent(llm, wiki_agent=wiki, temperature=temp, max_tokens=max_tok)
 
+    if agent_type == "ensemble":
+        from ..agents.ensemble_agent import EnsembleAgent
+        return EnsembleAgent(
+            llm, temperature=temp, max_tokens=max_tok,
+            wiki_max_tokens=gen_cfg.get("wiki_max_tokens", 4096),
+            sc_samples=gen_cfg.get("sc_samples", 5),
+            sc_temperature=gen_cfg.get("sc_temperature", 0.7),
+        )
+
     raise ValueError(f"unknown agent type: {agent_type!r}")
 
 
