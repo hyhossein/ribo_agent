@@ -21,16 +21,17 @@ knowledge-augmented (89%) → multi-model voting (89.35%).
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
-| 🥈 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
-| 🥉 | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
-| 4. | **v5_elimination opus** | `0.8639` | `0.8639` | - |
-| 5. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
-| 6. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
-| 7. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
-| 8. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
+| 🥇 | **v6_3way majority_vote_opus** | `0.9172` | `0.9172` | - |
+| 🥈 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
+| 🥉 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
+| 4. | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
+| 5. | **v5_elimination opus** | `0.8639` | `0.8639` | - |
+| 6. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
+| 7. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
+| 8. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
+| 9. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 21:24 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 21:26 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
