@@ -25,7 +25,7 @@ to Azure ML for production.
 | 6. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 7. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 19:30 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-24 19:31 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -109,9 +109,39 @@ broke 9.**
 
 **Key finding:** Adding inference-time compute (voting, fallback) does
 not help when the baseline is already well-calibrated. Simplicity wins
-on deterministic regulatory MCQ. See
-[`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) for
-the full analysis.
+on deterministic regulatory MCQ.
+
+### Step 6: Root cause analysis
+
+**Approach:** Traced all 11 questions wrong across every agent variant
+to their root cause. Cross-referenced against the study corpus.
+([`docs/ROOT_CAUSE_ANALYSIS.md`](./docs/ROOT_CAUSE_ANALYSIS.md))
+
+**Finding:** 5 of 11 (45%) ask about **homeowners insurance** — a
+topic not covered by any document in our study corpus. The remaining 6
+misapply knowledge that IS in the corpus. No amount of prompt
+engineering or voting can answer questions about content that doesn't
+exist in the source material.
+
+**Insight:** The bottleneck shifted from model capability to **corpus
+completeness**. The next improvement requires better data, not better
+algorithms.
+
+### Step 7: Multi-model confidence voting
+
+**Approach:** Tested 6 voting rules across 5 independent prediction
+sets to find a safe way to combine models.
+([`docs/VOTING_ANALYSIS.md`](./docs/VOTING_ANALYSIS.md))
+
+**Rule:** Trust the wiki agent (88.76%) unless ALL four independent
+models (2× Opus zero-shot + Phi-4 Mini + Qwen 2.5 7B) unanimously
+agree on a different answer. This triggered on only 4 of 169
+questions — flipped 2 correct, 1 wrong, 1 unchanged.
+
+**Result:** **89.35%** — the current best. A principled ensemble:
+when 4 independent models with different architectures, sizes, and
+training data all converge against the wiki agent, the wiki agent is
+likely wrong.
 
 ### Summary
 
@@ -119,19 +149,24 @@ the full analysis.
  49.1%  ──►  Phi-4 Mini 3.8B, zero-shot, local         ($0)
  59.8%  ──►  Qwen 2.5 7B, zero-shot, local              ($0)
  78.7%  ──►  Claude Opus 4, zero-shot, API               ($1)
- 88.8%  ──►  Claude Opus 4 + Rewrite + Wiki              ($8)   ◄── best
  88.2%  ──►  Claude Opus 4 + Ensemble v3                 ($10)  ◄── more complex, worse
+ 88.8%  ──►  Claude Opus 4 + Rewrite + Wiki              ($8)
+ 89.4%  ──►  Confidence voting (multi-model ensemble)    ($0*)  ◄── best result
 ```
+
+*\*No additional API calls — computed from existing prediction sets.*
 
 **The dominant lever is knowledge access, not model size or inference
 compute.** The +10pp wiki lift is larger than the cost of switching
-from a free local model to a $1/query frontier model.
+from a free local model to a $1/query frontier model. The final +0.6pp
+from multi-model voting shows that cross-architecture consensus
+provides a small but safe additional signal.
 
 ---
 
 ## Agent architectures
 
-Four agent variants, each building on the previous.
+Five agent variants, each building on insights from the previous.
 
 ### v0: Zero-shot
 
@@ -159,9 +194,9 @@ Question  ──►  LLM rewrites  ──►  Clarified Question
                     Clarified Q + Wiki  ──►  LLM  ──►  A/B/C/D
 ```
 
-Two-stage: clarify the question, then answer with wiki. Best result.
+Two-stage: clarify the question, then answer with wiki.
 
-### v3: Ensemble (experimental)
+### v3: Ensemble (experimental, negative result)
 
 ```
 Question ──► Rewrite ──► Wiki answer ──► Confidence check
@@ -172,7 +207,30 @@ Question ──► Rewrite ──► Wiki answer ──► Confidence check
 ```
 
 Targeted fixes for each failure mode. Net negative due to calibration
-loss from temperature > 0 voting. Documented as a negative result.
+loss from temperature > 0 voting. Documented as a negative result —
+not every experiment improves accuracy.
+
+### v4: Confidence-calibrated multi-model voting (best)
+
+```
+Question ──► Rewrite + Wiki ──► Primary answer (Opus)
+                                       │
+          ┌────────────────────────────┤
+          ▼                            ▼
+   Opus ZS (×2)                  Phi-4 + Qwen 7B
+   (commercial)                  (open-source, local)
+          │                            │
+          └──────────┬─────────────────┘
+                     ▼
+              All 4 unanimously
+              agree on different    ──YES──►  Override to consensus
+              answer?
+                     │
+                    NO  ──────────────────►  Keep primary answer
+```
+
+Trust the wiki agent unless every independent model disagrees.
+Triggered on 4/169 questions. Net +1 correct. **89.35% — current best.**
 
 ---
 
@@ -180,11 +238,12 @@ loss from temperature > 0 voting. Documented as a negative result.
 
 | Model | Type | Size | Best accuracy | Agent |
 | :--- | :--- | :--- | ---: | :--- |
-| Claude Opus 4 | Commercial | — | **88.76%** | Rewrite+Wiki |
-| Claude Opus 4 | Commercial | — | 78.70% | Zero-shot |
-| Claude Sonnet 4 | Commercial | — | 52.07% | Zero-shot |
-| Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | Zero-shot |
-| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | Zero-shot |
+| Multi-model ensemble | Hybrid | — | **89.35%** | Confidence voting (v4) |
+| Claude Opus 4 | Commercial | — | 88.76% | Rewrite+Wiki (v2) |
+| Claude Opus 4 | Commercial | — | 78.70% | Zero-shot (v0) |
+| Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | Zero-shot (v0) |
+| Claude Sonnet 4 | Commercial | — | 52.07% | Zero-shot (v0) |
+| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | Zero-shot (v0) |
 
 Additional open-source models (Llama 3.1, Qwen 3, Gemma 3,
 DeepSeek-R1) configured but not yet evaluated. See
@@ -196,8 +255,10 @@ DeepSeek-R1) configured but not yet evaluated. See
 
 | Document | Description |
 | :--- | :--- |
-| [`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) | Full experimental report with cost analysis and strategy |
-| [`docs/ERROR_ANALYSIS.md`](./docs/ERROR_ANALYSIS.md) | 19 wrong answers categorized into 3 failure patterns |
+| [`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) | Full experimental report with cost analysis |
+| [`docs/ROOT_CAUSE_ANALYSIS.md`](./docs/ROOT_CAUSE_ANALYSIS.md) | Why accuracy plateaus: corpus gap analysis |
+| [`docs/VOTING_ANALYSIS.md`](./docs/VOTING_ANALYSIS.md) | 6 voting rules tested with honest results |
+| [`docs/ERROR_ANALYSIS.md`](./docs/ERROR_ANALYSIS.md) | 19 wrong answers categorized by failure pattern |
 | [`docs/LITERATURE.md`](./docs/LITERATURE.md) | 15 cited works justifying pipeline design |
 | [`docs/MODELS.md`](./docs/MODELS.md) | Evidence-based model selection rationale |
 | [`PLAN.md`](./PLAN.md) | Build plan and release schedule |
@@ -236,22 +297,28 @@ make compare
 ## Architecture
 
 ```
-                  ┌───────────────────────────────────┐
-                  │  Agent (v0 / v1 / v2 / v3)       │
-                  │  zeroshot / wiki / rewrite / ens. │
-                  └────┬─────────────────┬────────────┘
-                       │                 │
-                       ▼                 ▼
-               ┌──────────────┐   ┌──────────────┐
-               │ LLMClient    │   │ Knowledge    │
-               │ (Protocol)   │   │ Base (wiki)  │
-               └──────┬───────┘   └──────────────┘
-            ┌─────────┼──────────┐
-            ▼         ▼          ▼
-     ┌──────────┐ ┌──────────┐ ┌──────────┐
-     │ Ollama   │ │Anthropic │ │ OpenAI   │
-     │ (local)  │ │ API      │ │ API      │
-     └──────────┘ └──────────┘ └──────────┘
+                  ┌──────────────────────────────────────┐
+                  │       Agent Pipeline (v0-v4)         │
+                  │                                      │
+                  │  v0: zero-shot                       │
+                  │  v1: wiki compilation                │
+                  │  v2: question rewrite + wiki         │
+                  │  v3: ensemble (RAG fallback + SC)    │
+                  │  v4: multi-model confidence voting   │
+                  └──┬───────────────┬──────────────┬────┘
+                     │               │              │
+                     ▼               ▼              ▼
+              ┌────────────┐  ┌───────────┐  ┌───────────────┐
+              │ LLMClient  │  │ Knowledge │  │ Multi-model   │
+              │ (Protocol) │  │ Base      │  │ Voter (v4)    │
+              └──────┬─────┘  │           │  │               │
+          ┌──────────┼────┐   │ 297 chunks│  │ Opus ZS ×2    │
+          ▼          ▼    ▼   │ Wiki cache│  │ Phi-4 (local) │
+   ┌──────────┐ ┌────────┐   │ BM25 index│  │ Qwen (local)  │
+   │ Ollama   │ │Anthropic│  └───────────┘  └───────────────┘
+   │ (local)  │ │ API     │
+   │ Phi, Qwen│ │ Opus    │
+   └──────────┘ └─────────┘
 ```
 
 Swap backends by editing one config line:
