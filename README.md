@@ -3,13 +3,12 @@
 [![CI](https://github.com/hyhossein/ribo_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/hyhossein/ribo_agent/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![Release](https://img.shields.io/github/v/release/hyhossein/ribo_agent?include_prereleases)](https://github.com/hyhossein/ribo_agent/releases)
 [![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](./tests)
 
-An AI agent that answers multiple-choice questions from the Ontario
-**RIBO Level 1** insurance broker licensing exam. Supports both
-open-source local models (Ollama) and commercial APIs (Anthropic
-Claude, OpenAI). Designed to promote to Azure ML for production.
+An AI agent that answers Ontario **RIBO Level 1** insurance broker
+licensing exam questions. Benchmarked across open-source local models
+(Ollama) and commercial APIs (Anthropic Claude). Designed to promote
+to Azure ML for production.
 
 ---
 
@@ -18,176 +17,140 @@ Claude, OpenAI). Designed to promote to Azure ML for production.
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **wiki_claude-opus-4-20250514** | `0.8876` | `0.8869` | 20399 |
-| 🥈 | **claude-opus-4-20250514** | `0.8817` | `0.8766` | 51512 |
-| 🥉 | **claude-opus-4-20250514** | `0.7870` | `0.8031` | 7396 |
-| 4. | **Qwen 2.5 7B Instruct** | `0.5976` | `0.6085` | 41979 |
-| 5. | **claude-sonnet-4-20250514** | `0.5207` | `0.5351` | 6253 |
+| 🥇 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
+| 🥈 | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
+| 🥉 | **Opus 4** | `0.7870` | `0.8031` | 7396 |
+| 4. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
+| 5. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 6. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-24 18:47 UTC · 169-question eval set · zero-shot, no RAG_
+_Updated 2026-04-24 18:48 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
 
+Full per-model reports: [`results/runs/`](./results/runs) ·
+Live leaderboard: [`results/LEADERBOARD.md`](./results/LEADERBOARD.md)
+
 ---
 
-## Methodology: from open-source baseline to agentic pipeline
+## Methodology: the experimental journey
 
-This section documents the reasoning process, not just the result.
-The journey from a 49% local model to an 88% agentic system followed
-a deliberate experimental progression.
+Each step tests a specific hypothesis. The commit history shows every
+experiment as it happened. For the full analysis including error
+breakdowns and cost accounting, see
+[`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md).
 
-### Step 1: Establish the floor with open-source models
+### Step 1: Open-source floor
 
 **Question:** How well can small, free, locally-runnable models answer
-Ontario insurance licensing questions out of the box?
+the exam out of the box?
 
-**Approach:** We benchmarked seven open-source models (3.8B to 12B
-parameters) via Ollama on a 16 GB MacBook Air. Zero-shot, no
-retrieval, no context. Pure parametric knowledge.
-
-**Finding:** The best open-source model (Qwen 2.5 7B) reached 59.8%.
-The smallest (Phi-4 Mini 3.8B) reached 49.1%. All are well above
-random (25%) but none pass the exam (75%). The models have general
-insurance knowledge from pretraining but lack Ontario-specific
+**Result:** Qwen 2.5 7B reached **59.8%**, Phi-4 Mini reached
+**49.1%**. Both above random (25%) but below the pass mark (75%).
+The models have general insurance knowledge but lack Ontario-specific
 regulatory details.
 
-**Insight:** Open-source models at this scale cannot pass the exam
-alone. But they are not useless — they demonstrate that insurance
-domain knowledge exists in the model weights. The gap is
-jurisdiction-specific rules, not domain understanding.
+**Insight:** The bottleneck is jurisdiction-specific rules, not domain
+understanding. Knowledge access is the problem to solve.
 
-### Step 2: Test commercial models to measure the parameter ceiling
+### Step 2: Commercial model ceiling
 
-**Question:** Does scaling to a frontier model close the gap, or is
-the problem fundamentally about knowledge access?
+**Question:** Does a frontier model close the gap without study
+material?
 
-**Approach:** We evaluated Claude Sonnet 4 and Claude Opus 4 via the
-Anthropic API. Same zero-shot prompt, same 169 questions.
+**Result:** Claude Opus 4 reached **78.7%** zero-shot (barely passing).
+Sonnet 4 reached **52.1%**. Failures cluster on questions citing
+specific statutes ("under s. 14 of Regulation 991...").
 
-**Finding:** Opus 4 reached 78.7% (above the pass mark). Sonnet 4
-reached 52.1%. The Sonnet-to-Opus jump (+26.6pp) is much larger than
-Phi-to-Qwen (+10.7pp), confirming that model quality matters — but
-even Opus misses regulation-specific questions where the answer
-requires knowing exact section numbers or exception clauses.
+**Insight:** Even a frontier model barely passes. The remaining errors
+are knowledge access problems, not reasoning problems.
 
-**Insight:** A frontier model can pass the exam zero-shot, but
-barely. The failure cases cluster on questions citing specific
-statutes (e.g. "under s. 14 of Regulation 991..."). This is a
-knowledge access problem, not a reasoning problem.
+### Step 3: Knowledge compilation (LLM Wiki)
 
-### Step 3: Compile the knowledge base (Karpathy LLM Wiki)
+**Question:** What if we give the model structured access to the study
+corpus?
 
-**Question:** If we give the model structured access to the official
-study corpus, how much does accuracy improve?
+**Approach:** Inspired by
+[Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f),
+we pre-compile all 297 study chunks into a structured knowledge wiki
+organized by topic, with cross-references resolved. The wiki is built
+once and cached.
 
-**Approach:** Instead of traditional RAG (embed chunks, retrieve
-top-k per question), we adopted
-[Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f):
-use the LLM itself to pre-compile all 297 study chunks into a
-structured knowledge wiki organized by topic, with cross-references
-resolved and section numbers preserved. The wiki is built once at
-startup and cached. At eval time, each question is answered against
-the compiled wiki rather than raw document fragments.
+**Why this beats traditional RAG:** RAG re-discovers knowledge per
+question and depends on embedding quality. The wiki compiles once,
+surfaces all cross-references, and gives the model organized knowledge
+rather than disconnected fragments.
 
-**Why wiki over RAG:** traditional RAG has two failure modes on this
-task. First, the embedding model may not retrieve the right chunk —
-regulatory text is dense and semantically similar across sections.
-Second, retrieved chunks lack cross-references, so the model can't
-see that section 14 has an exception defined in section 14.1. The
-wiki pattern eliminates both: compilation surfaces all
-cross-references, and the model sees organized knowledge rather than
-disconnected fragments.
+### Step 4: Question rewriting + Wiki
 
-**Finding:** Opus 4 + Wiki reached **88.2%** — a +9.5pp lift over
-zero-shot. The improvement is concentrated on exactly the question
-types that zero-shot missed: regulation-specific, section-citing,
-exception-clause questions.
+**Approach:** Before answering, an LLM rewrites the question to expand
+abbreviations (OAP = Ontario Automobile Policy), identify the relevant
+regulation, and clarify ambiguities. The clarified question feeds into
+the wiki agent.
 
-**Insight:** Knowledge access is the dominant lever. The wiki
-compilation cost ($3 one-time) is amortized across all questions.
-This is cheaper and more effective than scaling to a larger model.
+**Result:** Opus + Rewrite + Wiki reached **88.76%** — a **+10.1pp
+lift** over zero-shot. The improvement is concentrated on
+regulation-specific, section-citing questions.
 
-### Step 4: Question rewriting (in progress)
+### Step 5: Ensemble v3 (error-analysis-driven)
 
-**Question:** Can we further improve accuracy by clarifying
-ambiguous questions before the model answers?
+**Approach:** After reviewing all 19 wrong answers
+([`docs/ERROR_ANALYSIS.md`](./docs/ERROR_ANALYSIS.md)), we identified
+three failure patterns: wiki gaps (7 Qs), calculation errors (5 Qs),
+and confident-but-wrong answers (7 Qs). Built targeted fixes: BM25 RAG
+fallback for wiki gaps, self-consistency voting for calculations.
 
-**Approach:** A two-stage pipeline where an LLM first rewrites the
-question stem — expanding abbreviations (OAP = Ontario Automobile
-Policy), identifying which regulation is being tested, clarifying
-pronouns — then passes the clarified question to the wiki agent.
+**Result:** **88.17%** — slightly *worse* than rewrite+wiki alone. The
+self-consistency voting at temperature=0.7 introduced noise on questions
+that temperature=0 already answered correctly. **Fixed 8 questions but
+broke 9.**
 
-**Hypothesis:** Some questions the model gets wrong are not because
-it lacks the knowledge, but because it fails to connect the question
-phrasing to the right section in the wiki. Rewriting acts as a
-"study buddy" layer.
+**Key finding:** Adding inference-time compute (voting, fallback) does
+not help when the baseline is already well-calibrated. Simplicity wins
+on deterministic regulatory MCQ. See
+[`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) for
+the full analysis.
 
-**Status:** eval running, results pending.
-
-### Summary of the progression
+### Summary
 
 ```
- 49.1%  ──►  Phi-4 Mini 3.8B, zero-shot, local
- 59.8%  ──►  Qwen 2.5 7B, zero-shot, local
- 78.7%  ──►  Claude Opus 4, zero-shot, API
- 88.2%  ──►  Claude Opus 4 + Wiki compilation    ◄── best result
-  ???   ──►  Claude Opus 4 + Rewrite + Wiki       ◄── in progress
+ 49.1%  ──►  Phi-4 Mini 3.8B, zero-shot, local         ($0)
+ 59.8%  ──►  Qwen 2.5 7B, zero-shot, local              ($0)
+ 78.7%  ──►  Claude Opus 4, zero-shot, API               ($1)
+ 88.8%  ──►  Claude Opus 4 + Rewrite + Wiki              ($8)   ◄── best
+ 88.2%  ──►  Claude Opus 4 + Ensemble v3                 ($10)  ◄── more complex, worse
 ```
 
-Each step tests a specific hypothesis. The commit history shows
-every experiment as it happened.
+**The dominant lever is knowledge access, not model size or inference
+compute.** The +10pp wiki lift is larger than the cost of switching
+from a free local model to a $1/query frontier model.
 
 ---
 
 ## Agent architectures
 
-Three progressively more sophisticated designs. The accuracy lift
-from v0 to v1 is the core result.
+Four agent variants, each building on the previous.
 
-### v0: Zero-shot (baseline)
-
-The model sees only the question and four options. No study material.
-This measures what the LLM already knows from pretraining.
+### v0: Zero-shot
 
 ```
 Question + Options  ──►  LLM  ──►  A/B/C/D
 ```
 
-Opus 4 reaches **78.7%** zero-shot. Strong, but misses
-regulation-specific details that require exact section knowledge.
+No context. Pure parametric knowledge. The floor.
 
-### v1: LLM Wiki agent
-
-Inspired by [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
-Instead of traditional RAG (retrieve raw chunks per question), we
-**pre-compile the entire 297-chunk study corpus into a structured
-knowledge wiki** at startup. The wiki is organized by topic (RIB Act,
-Ontario Regulations 989/990/991, RIBO By-Laws 1/2/3, OAP 2025) with
-cross-references already resolved and section numbers preserved.
+### v1: LLM Wiki
 
 ```
-297 study chunks  ──►  LLM compiles  ──►  Structured Wiki (cached)
-                                                  │
-                         Question + Wiki  ──►  LLM  ──►  A/B/C/D
+297 chunks  ──►  LLM compiles  ──►  Wiki (cached)
+                                        │
+                   Question + Wiki  ──►  LLM  ──►  A/B/C/D
 ```
 
-**Why this beats traditional RAG:** RAG re-discovers knowledge from
-scratch on every question, hoping the embedding model finds the right
-chunk. The wiki pattern compiles once and reuses: cross-references
-are pre-resolved, the synthesis reflects the entire corpus, and the
-model sees organized knowledge rather than disconnected fragments.
+Pre-compiled knowledge wiki. The breakthrough (+10pp).
 
-Opus 4 + Wiki reaches **88.2%** — a **+9.5pp lift** over zero-shot
-and well above the 75% pass mark.
-
-### v2: Question rewrite + Wiki
-
-Two-stage agentic pipeline. Before answering, an LLM rewrites the
-question to expand abbreviations (OAP, RIB Act), clarify ambiguous
-pronouns, and identify which specific regulation or section is being
-tested. The clarified question then feeds into the wiki agent.
+### v2: Rewrite + Wiki
 
 ```
 Question  ──►  LLM rewrites  ──►  Clarified Question
@@ -195,46 +158,49 @@ Question  ──►  LLM rewrites  ──►  Clarified Question
                     Clarified Q + Wiki  ──►  LLM  ──►  A/B/C/D
 ```
 
-This addresses a common failure mode where the model knows the rule
-but can't connect the original question phrasing to the right section.
+Two-stage: clarify the question, then answer with wiki. Best result.
 
----
+### v3: Ensemble (experimental)
 
-## Key results
+```
+Question ──► Rewrite ──► Wiki answer ──► Confidence check
+                                              │
+                    High confidence ──► Submit │
+                    Low confidence  ──► RAG fallback ──► Submit
+                    Calculation     ──► 5x voting ──► Submit
+```
 
-| Approach | Accuracy | Cost | Insight |
-| :--- | ---: | ---: | :--- |
-| Opus zero-shot | 78.7% | $1.01 | Strong base knowledge, misses regulation specifics |
-| **Opus + Wiki** | **88.2%** | ~$4.00 | **Pre-compiled knowledge is the dominant lever** |
-| Qwen 2.5 7B (local) | 59.8% | $0 | Viable for low-cost pre-screening |
-| Sonnet 4 zero-shot | 52.1% | $0.32 | Instruction-following gap vs Opus on regulatory MCQ |
-| Phi-4 Mini 3.8B (local) | 49.1% | $0 | Above random but below practical threshold |
-
-**The takeaway:** knowledge access matters more than model size.
-Opus zero-shot (78.7%) vs Opus + wiki (88.2%) shows that structured
-context delivers a bigger lift than scaling from Sonnet to Opus
-(52.1% → 78.7%).
+Targeted fixes for each failure mode. Net negative due to calibration
+loss from temperature > 0 voting. Documented as a negative result.
 
 ---
 
 ## Model coverage
 
-Both open-source and commercial models, evaluating the
-cost-accuracy tradeoff.
+| Model | Type | Size | Best accuracy | Agent |
+| :--- | :--- | :--- | ---: | :--- |
+| Claude Opus 4 | Commercial | — | **88.76%** | Rewrite+Wiki |
+| Claude Opus 4 | Commercial | — | 78.70% | Zero-shot |
+| Claude Sonnet 4 | Commercial | — | 52.07% | Zero-shot |
+| Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | Zero-shot |
+| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | Zero-shot |
 
-| Model | Type | Size | Backend |
-| :--- | :--- | :--- | :--- |
-| Claude Opus 4 | Commercial | — | Anthropic API |
-| Claude Sonnet 4 | Commercial | — | Anthropic API |
-| Qwen 2.5 7B Instruct | Open-source | 4.4 GB | Ollama (local) |
-| Phi-4 Mini 3.8B | Open-source | 2.5 GB | Ollama (local) |
-| Llama 3.1 8B | Open-source | 4.7 GB | Ollama (local) |
-| Qwen 3 8B | Open-source | 5.2 GB | Ollama (local) |
-| Gemma 3 12B | Open-source | 8.1 GB | Ollama (local) |
-| DeepSeek-R1-Distill 7B | Open-source | 4.7 GB | Ollama (local) |
+Additional open-source models (Llama 3.1, Qwen 3, Gemma 3,
+DeepSeek-R1) configured but not yet evaluated. See
+[`docs/MODELS.md`](./docs/MODELS.md) for the selection rationale.
 
-Model selection rationale: [`docs/MODELS.md`](./docs/MODELS.md)
-Literature review (15 cited works): [`docs/LITERATURE.md`](./docs/LITERATURE.md)
+---
+
+## Documentation
+
+| Document | Description |
+| :--- | :--- |
+| [`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md) | Full experimental report with cost analysis and strategy |
+| [`docs/ERROR_ANALYSIS.md`](./docs/ERROR_ANALYSIS.md) | 19 wrong answers categorized into 3 failure patterns |
+| [`docs/LITERATURE.md`](./docs/LITERATURE.md) | 15 cited works justifying pipeline design |
+| [`docs/MODELS.md`](./docs/MODELS.md) | Evidence-based model selection rationale |
+| [`PLAN.md`](./PLAN.md) | Build plan and release schedule |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Detailed release notes |
 
 ---
 
@@ -253,9 +219,9 @@ ollama serve &
 ollama pull qwen2.5:7b-instruct
 make eval CONFIG=configs/v0_zeroshot_qwen25_7b.yaml
 
-# wiki agent with Claude Opus (the 88.2% run)
+# wiki agent with Claude Opus (the 88.76% run)
 export ANTHROPIC_API_KEY="your-key"
-make eval CONFIG=configs/v1_wiki_opus.yaml
+make eval CONFIG=configs/v2_rewrite_wiki_opus.yaml
 
 # full open-source model sweep (unattended, ~90 min)
 make sweep
@@ -269,10 +235,10 @@ make compare
 ## Architecture
 
 ```
-                  ┌──────────────────────────────┐
-                  │  Agent (v0 / v1 / v2)        │
-                  │  zero-shot / wiki / rewrite  │
-                  └────┬─────────────────┬───────┘
+                  ┌───────────────────────────────────┐
+                  │  Agent (v0 / v1 / v2 / v3)       │
+                  │  zeroshot / wiki / rewrite / ens. │
+                  └────┬─────────────────┬────────────┘
                        │                 │
                        ▼                 ▼
                ┌──────────────┐   ┌──────────────┐
@@ -292,51 +258,29 @@ Swap backends by editing one config line:
 ```yaml
 llm:
   backend: ollama       # or: anthropic, openai, azure_openai, azureml
-  model: qwen2.5:7b-instruct
 ```
 
 ---
 
-## Repo layout
-
-```
-src/ribo_agent/
-    parsers/         # PDF → MCQ JSONL (3 parsers, 2 documented traps)
-    agents/          # v0 zero-shot, v1 wiki, v2 rewrite+wiki
-    llm/             # LLMClient protocol + 4 backends
-    kb/              # study-doc ingestion + section-aware chunker
-    eval/            # metrics, runner, leaderboard
-    io/              # storage abstraction (local + Azure Blob)
-tests/               # 87 tests
-configs/             # one YAML per agent × model
-docs/
-    MODELS.md        # model selection rationale with references
-    LITERATURE.md    # 15 cited works justifying pipeline design
-data/raw/            # immutable source PDFs
-results/runs/        # per-run predictions, metrics, reports
-scripts/             # model_sweep.sh
-```
-
 ## Design principles
 
-**Local-first, cloud-ready.** Every capability sits behind a protocol
-with multiple implementations. Today: Ollama + local files. Tomorrow:
-Azure ML + Blob Storage, one config change.
+**Local-first, cloud-ready.** Every capability sits behind a protocol.
+Today: Ollama + local files. Tomorrow: Azure ML + Blob Storage.
 
 **Reproducible.** Raw PDFs in, JSONL out, deterministic chunks, fixed
 temperature 0.0. Any number in `results/` re-derives from a clean
 checkout.
 
-**Tested.** 87 tests covering PDF parsing traps (bold-font detection,
-X-grid column offsets, form-feed page boundaries), agent answer
+**Tested.** 87 tests covering PDF parsing traps, agent answer
 extraction, metrics computation, and leaderboard rendering.
 
-**Observable.** CI on every push. Each release tagged. Eval reports
-are versioned markdown — read a commit diff, see the number move.
+**Observable.** CI on every push. Eval reports are versioned markdown.
 
-**Literature-grounded.** Every design choice backed by a citation:
-LegalBench (NeurIPS 2023), LawBench (EMNLP 2024), ColBERTv2, BGE-M3,
-Self-Consistency (ICLR 2023). See [`docs/LITERATURE.md`](./docs/LITERATURE.md).
+**Literature-grounded.** Every design choice backed by a citation.
+See [`docs/LITERATURE.md`](./docs/LITERATURE.md).
+
+**Honest about failures.** The ensemble v3 is documented as a negative
+result. Not every experiment improves accuracy, and we report that.
 
 ## License
 

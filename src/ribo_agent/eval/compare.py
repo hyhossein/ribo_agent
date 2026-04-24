@@ -27,21 +27,30 @@ def _collect() -> list[dict]:
         if not mpath.exists():
             continue
         m = json.loads(mpath.read_text())
-        # dir name format: "<ts>_<config_name>_<model_safe>" where
-        # config_name starts with 'v0_' and model_safe may contain
-        # dots and hyphens. Strip ts and config prefix in order.
+        # dir format: "<ts>_<agent_type>_<model_safe>"
+        # examples:
+        #   20260423-195907_v0_zeroshot_claude-opus-4-20250514
+        #   20260424-063248_v2_rewrite_wiki_claude-opus-4-20250514
+        #   20260423-182402_v0_zeroshot_phi4-mini
         name = run_dir.name
         parts = name.split("_")
         ts_part = parts[0]
-        # config_name tokens start at 1 and stop when we hit the model slug.
-        # Our configs all name themselves "v0_zeroshot" so the model slug
-        # begins at index 3. Fallback: take everything after the 3rd token.
-        model_part = "_".join(parts[3:]) if len(parts) > 3 else parts[-1]
+
+        # Extract agent prefix and model slug from the dir name
+        # Agent prefix: v0_zeroshot, v1_wiki, v2_rewrite_wiki, v3_ensemble
+        # Model slug: everything after the agent prefix
+        suffix = "_".join(parts[1:])  # e.g. "v0_zeroshot_claude-opus-4-20250514"
+        agent_type, model_slug = _parse_agent_and_model(suffix)
+
+        display = _pretty_display(agent_type, model_slug)
+
         rows.append({
             "run": name,
             "timestamp": ts_part,
-            "model": _pretty_model(model_part),
-            "model_raw": model_part,
+            "model": display,
+            "model_raw": model_slug,
+            "agent_type": agent_type,
+            "dedup_key": f"{agent_type}_{model_slug}",
             "n": m.get("n"),
             "accuracy": m.get("accuracy"),
             "macro_f1": m.get("macro_f1"),
@@ -52,16 +61,49 @@ def _collect() -> list[dict]:
     return rows
 
 
+_AGENT_PREFIXES = [
+    "v3_ensemble",
+    "v2_rewrite_wiki",
+    "v1_wiki",
+    "v0_zeroshot",
+]
+
+
+def _parse_agent_and_model(suffix: str) -> tuple[str, str]:
+    """Split 'v2_rewrite_wiki_claude-opus-4-20250514' into
+    ('v2_rewrite_wiki', 'claude-opus-4-20250514')."""
+    for prefix in _AGENT_PREFIXES:
+        if suffix.startswith(prefix + "_"):
+            model = suffix[len(prefix) + 1:]
+            return prefix, model
+        if suffix == prefix:
+            return prefix, "unknown"
+    # Fallback: assume v0_zeroshot and take everything after first two tokens
+    parts = suffix.split("_", 2)
+    if len(parts) >= 3:
+        return f"{parts[0]}_{parts[1]}", parts[2]
+    return "v0_zeroshot", suffix
+
+
 _MODEL_PRETTY = {
-    "qwen2.5_7b-instruct": "Qwen 2.5 7B Instruct",
+    "qwen2.5_7b-instruct": "Qwen 2.5 7B",
     "qwen3_8b": "Qwen 3 8B",
     "llama3.1_8b": "Llama 3.1 8B",
-    "llama3.1_8b-instruct": "Llama 3.1 8B Instruct",
+    "llama3.1_8b-instruct": "Llama 3.1 8B",
     "phi3.5_3.8b": "Phi 3.5 3.8B",
     "phi4-mini": "Phi-4 Mini 3.8B",
     "gemma3_12b": "Gemma 3 12B",
-    "deepseek-r1_7b": "DeepSeek-R1-Distill 7B",
-    "mistral_7b-instruct": "Mistral 7B Instruct",
+    "deepseek-r1_7b": "DeepSeek-R1 7B",
+    "mistral_7b-instruct": "Mistral 7B",
+    "claude-opus-4-20250514": "Opus 4",
+    "claude-sonnet-4-20250514": "Sonnet 4",
+}
+
+_AGENT_PRETTY = {
+    "v0_zeroshot": "",
+    "v1_wiki": "Wiki +",
+    "v2_rewrite_wiki": "Rewrite+Wiki +",
+    "v3_ensemble": "Ensemble +",
 }
 
 
@@ -69,19 +111,25 @@ def _pretty_model(slug: str) -> str:
     return _MODEL_PRETTY.get(slug, slug)
 
 
+def _pretty_display(agent_type: str, model_slug: str) -> str:
+    """Combine agent label and model name into a readable display string."""
+    model = _MODEL_PRETTY.get(model_slug, model_slug)
+    agent = _AGENT_PRETTY.get(agent_type, agent_type)
+    if agent:
+        return f"{agent} {model}"
+    return model
+
+
 def _latest_per_model(rows: list[dict]) -> list[dict]:
-    """Deduplicate: keep only the most recent run per model."""
-    by_model: dict[str, dict] = {}
+    """Deduplicate: keep only the most recent run per agent+model combo."""
+    by_key: dict[str, dict] = {}
     for r in rows:
-        # Use config prefix + model so different agent types don't collapse
-        parts = r["run"].split("_")
-        config_prefix = "_".join(parts[1:3]) if len(parts) > 3 else "v0_zeroshot"
-        key = f"{config_prefix}_{r['model_raw']}"
-        existing = by_model.get(key)
+        key = r.get("dedup_key", r["model_raw"])
+        existing = by_key.get(key)
         if existing is None or r["timestamp"] > existing["timestamp"]:
-            by_model[key] = r
+            by_key[key] = r
     return sorted(
-        by_model.values(), key=lambda r: (r["accuracy"] or 0), reverse=True,
+        by_key.values(), key=lambda r: (r["accuracy"] or 0), reverse=True,
     )
 
 
@@ -147,7 +195,7 @@ def _format_markdown(rows: list[dict], *, compact: bool = False) -> str:
                 f"{r['refusal']:.3f} | {lat} |"
             )
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    lines += ["", f"_Updated {ts} · 169-question eval set · zero-shot, no RAG_"]
+    lines += ["", f"_Updated {ts} · 169-question eval set · open-source + commercial models_"]
     return "\n".join(lines) + "\n"
 
 
