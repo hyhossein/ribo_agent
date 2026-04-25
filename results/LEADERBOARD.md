@@ -8,9 +8,9 @@
 | 6. | **Opus 4** | 169 | `0.7870` | `0.8031` | 0.053 | 7396 |
 | 7. | **Few-Shot (3 examples) + Qwen 2.5 7B** | 169 | `0.6154` | `0.6154` | 0.000 | - |
 | 8. | **Qwen 2.5 7B** | 169 | `0.5976` | `0.6085` | 0.035 | 41979 |
-| 9. | **phi4_mini** | 169 | `0.5266` | `0.5266` | 0.000 | - |
+| 9. | **Few-Shot (3 examples) + Phi-4 Mini 3.8B** | 169 | `0.5266` | `0.5266` | 0.000 | - |
 | 10. | **Sonnet 4** | 169 | `0.5207` | `0.5351` | 0.053 | 6253 |
 | 11. | **Phi-4 Mini 3.8B** | 169 | `0.4911` | `0.4982` | 0.035 | 25095 |
 
-_Updated 2026-04-25 21:21 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-25 21:22 UTC · 169-question eval set · open-source + commercial models_
 
