@@ -165,17 +165,18 @@ likely wrong.
 ### Summary
 
 ```
- 49.1%  ──►  Phi-4 Mini 3.8B, zero-shot, local         ($0)
+ 49.1%  ──►  Phi-4 Mini, zero-shot, local               ($0)
  59.8%  ──►  Qwen 2.5 7B, zero-shot, local              ($0)
- 78.7%  ──►  Claude Opus 4, zero-shot, API               ($1)
- 86.4%  ──►  Claude Opus 4 + Elimination prompt          ($1)
- 88.2%  ──►  Claude Opus 4 + Ensemble v3                 ($10)
- 88.8%  ──►  Claude Opus 4 + Rewrite + Wiki              ($8)
- 89.4%  ──►  Confidence voting (4-vs-1 unanimous)        ($0*)
- 91.7%  ──►  3-way majority vote (3 strategies)          ($0*)  ◄── best result
+ 78.7%  ──►  Opus 4, zero-shot x3 runs                  (~$15)
+ 86.4%  ──►  Opus 4 + Elimination prompt                 (~$5)
+ 88.2%  ──►  Opus 4 + Ensemble v3                        (~$40)
+ 88.8%  ──►  Opus 4 + Rewrite + Wiki x2 runs             (~$70)
+ 89.4%  ──►  Confidence voting                      (no extra cost)
+ 91.7%  ──►  3-way majority vote                    (no extra cost)
 ```
 
-*\*No additional API calls — computed from existing prediction sets.*
+Wiki compilation x3 builds (~$60) + Sonnet 4 (~$5) + testing (~$25).
+**Total project cost: ~$220.** Voting steps combine existing predictions at no extra cost. — computed from existing prediction sets.*
 
 ### Step 8: Few-shot validation
 
