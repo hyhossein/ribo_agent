@@ -33,7 +33,7 @@ knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 | 10. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 11. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-25 21:39 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-25 21:43 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -304,8 +304,11 @@ Simple majority vote recovers questions any two of three get right.
 | 3-way majority vote | Hybrid | — | **91.72%** | v6: wiki + elimination + ensemble |
 | Multi-model consensus | Hybrid | — | 89.35% | v4: confidence voting |
 | Claude Opus 4 | Commercial | — | 88.76% | v2: rewrite+wiki |
+| Claude Opus 4 | Commercial | — | 86.39% | v5: elimination |
 | Claude Opus 4 | Commercial | — | 78.70% | v0: zero-shot |
+| Qwen 2.5 7B | Open-source | 4.4 GB | 61.54% | v7: few-shot (3 examples) |
 | Qwen 2.5 7B | Open-source | 4.4 GB | 59.76% | v0: zero-shot |
+| Phi-4 Mini 3.8B | Open-source | 2.5 GB | 52.66% | v7: few-shot (3 examples) |
 | Claude Sonnet 4 | Commercial | — | 52.07% | v0: zero-shot |
 | Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | v0: zero-shot |
 
@@ -347,13 +350,16 @@ make compare
 
 ```
                   ┌──────────────────────────────────────┐
-                  │       Agent Pipeline (v0-v4)         │
+                  │       Agent Pipeline (v0-v7)         │
                   │                                      │
                   │  v0: zero-shot                       │
                   │  v1: wiki compilation                │
                   │  v2: question rewrite + wiki         │
                   │  v3: ensemble (RAG fallback + SC)    │
-                  │  v4: multi-model confidence voting   │
+                  │  v4: multi-model confidence voting
+                  │  v5: elimination prompt
+                  │  v6: 3-way majority vote
+                  │  v7: few-shot retrieval   │
                   └──┬───────────────┬──────────────┬────┘
                      │               │              │
                      ▼               ▼              ▼
