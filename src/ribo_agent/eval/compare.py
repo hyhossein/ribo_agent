@@ -63,6 +63,7 @@ def _collect() -> list[dict]:
 
 _AGENT_PREFIXES = [
     "v4_confidence_voting",
+    "fewshot",
     "v4_confidence",
     "v3_ensemble",
     "v2_rewrite_wiki",
@@ -109,6 +110,7 @@ _AGENT_PRETTY = {
     "v3_ensemble": "Ensemble +",
     "v4_confidence_voting": "Confidence Voting:",
     "v4_confidence": "Confidence Voting:",
+    "fewshot": "Few-Shot (3 examples) +",
 }
 
 
