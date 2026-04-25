@@ -21,19 +21,19 @@ knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **v6_3way majority_vote_opus** | `0.9172` | `0.9172` | - |
+| 🥇 | **3-Way Majority Vote: Opus 4** | `0.9172` | `0.9172` | - |
 | 🥈 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
 | 🥉 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
 | 4. | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
-| 5. | **v5_elimination opus** | `0.8639` | `0.8639` | - |
+| 5. | **Elimination + Opus 4** | `0.8639` | `0.8639` | - |
 | 6. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
-| 7. | **Few-Shot (3 examples) + Qwen 2.5 7B** | `0.6154` | `0.6154` | - |
+| 7. | **fewshot_qwen2.5 7b-instruct** | `0.6154` | `0.6154` | - |
 | 8. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
-| 9. | **Few-Shot (3 examples) + Phi-4 Mini 3.8B** | `0.5266` | `0.5266` | - |
+| 9. | **fewshot_phi4-mini** | `0.5266` | `0.5266` | - |
 | 10. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
 | 11. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
 
-_Updated 2026-04-25 21:22 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-25 21:39 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -57,9 +57,8 @@ Machine-readable leaderboard: [`results/LEADERBOARD.md`](./results/LEADERBOARD.m
 
 ## Methodology: the experimental journey
 
-Each step tests a specific hypothesis. The commit history shows every
-experiment as it happened. For the full analysis including error
-breakdowns and cost accounting, see
+Each step tests a specific hypothesis. For the full analysis including
+error breakdowns and cost accounting, see
 [`docs/MID_SUBMISSION_REPORT.md`](./docs/MID_SUBMISSION_REPORT.md).
 
 ### Step 1: Open-source floor
@@ -147,15 +146,6 @@ exist in the source material.
 completeness**. The next improvement requires better data, not better
 algorithms.
 
-> **A note on the exam materials.** The RIBO Level 1 exam asks
-> questions about homeowners insurance, Freezer Foods endorsements,
-> Fine Arts coverage, and snowmobile forms. The official study
-> materials contain exactly zero pages about any of these topics. We
-> built an agent that perfectly learned everything it was given to
-> study, and then the exam tested it on material from a textbook it
-> never received. If there is a more fitting metaphor for the current
-> state of AI evaluation, we have not found it.
-
 ### Step 7: Multi-model confidence voting
 
 **Approach:** Tested 6 voting rules across 5 independent prediction
@@ -187,10 +177,26 @@ likely wrong.
 
 *\*No additional API calls — computed from existing prediction sets.*
 
-**Three different prompting strategies (step-by-step, elimination,
+### Step 8: Few-shot validation
+
+**Approach:** Validated the 386 training MCQ pool by running few-shot
+in-context retrieval on local open-source models. For each eval
+question, retrieve the 3 most similar solved examples by keyword
+overlap and prepend them as context.
+
+**Results:**
+- Phi-4 Mini: 49.11% → 52.66% (**+3.55pp**)
+- Qwen 2.5 7B: 59.76% → 61.54% (**+1.78pp**)
+
+**Insight:** Smaller models benefit more from few-shot examples. The
+training pool adds measurable value even with simple keyword retrieval.
+Applying the same technique to Opus with the wiki would likely yield an
+additional 1-3% lift on top of the 91.72%.
+
+Three different prompting strategies (step-by-step, elimination,
 confidence-gated) have different failure modes. Simple majority vote
 across all three recovers questions that any two get right, crossing
-the 90% threshold at 91.72%.**
+the 90% threshold at 91.72%.
 
 ---
 

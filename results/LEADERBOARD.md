@@ -1,16 +1,16 @@
 |  | Model | n | Accuracy | Macro-F1 | Refusal | Latency mean (ms) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| 🥇 | **v6_3way majority_vote_opus** | 169 | `0.9172` | `0.9172` | 0.000 | - |
+| 🥇 | **3-Way Majority Vote: Opus 4** | 169 | `0.9172` | `0.9172` | 0.000 | - |
 | 🥈 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | 169 | `0.8935` | `0.8930` | 0.000 | - |
 | 🥉 | **Rewrite+Wiki + Opus 4** | 169 | `0.8876` | `0.8869` | 0.000 | 20399 |
 | 4. | **Ensemble + Opus 4** | 169 | `0.8817` | `0.8766` | 0.000 | 51512 |
-| 5. | **v5_elimination opus** | 169 | `0.8639` | `0.8639` | 0.000 | - |
+| 5. | **Elimination + Opus 4** | 169 | `0.8639` | `0.8639` | 0.000 | - |
 | 6. | **Opus 4** | 169 | `0.7870` | `0.8031` | 0.053 | 7396 |
-| 7. | **Few-Shot (3 examples) + Qwen 2.5 7B** | 169 | `0.6154` | `0.6154` | 0.000 | - |
+| 7. | **fewshot_qwen2.5 7b-instruct** | 169 | `0.6154` | `0.6154` | 0.000 | - |
 | 8. | **Qwen 2.5 7B** | 169 | `0.5976` | `0.6085` | 0.035 | 41979 |
-| 9. | **Few-Shot (3 examples) + Phi-4 Mini 3.8B** | 169 | `0.5266` | `0.5266` | 0.000 | - |
+| 9. | **fewshot_phi4-mini** | 169 | `0.5266` | `0.5266` | 0.000 | - |
 | 10. | **Sonnet 4** | 169 | `0.5207` | `0.5351` | 0.053 | 6253 |
 | 11. | **Phi-4 Mini 3.8B** | 169 | `0.4911` | `0.4982` | 0.035 | 25095 |
 
-_Updated 2026-04-25 21:22 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-25 21:39 UTC · 169-question eval set · open-source + commercial models_
 

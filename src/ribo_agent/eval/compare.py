@@ -62,9 +62,11 @@ def _collect() -> list[dict]:
 
 
 _AGENT_PREFIXES = [
-    "v4_confidence_voting",
     "v7_fewshot",
-    "fewshot",
+    "v6_3way_majority_vote",
+    "v6_3way",
+    "v5_elimination",
+    "v4_confidence_voting",
     "v4_confidence",
     "v3_ensemble",
     "v2_rewrite_wiki",
@@ -91,17 +93,20 @@ def _parse_agent_and_model(suffix: str) -> tuple[str, str]:
 
 _MODEL_PRETTY = {
     "qwen2.5_7b-instruct": "Qwen 2.5 7B",
+    "qwen25_7b": "Qwen 2.5 7B",
     "qwen3_8b": "Qwen 3 8B",
     "llama3.1_8b": "Llama 3.1 8B",
     "llama3.1_8b-instruct": "Llama 3.1 8B",
     "phi3.5_3.8b": "Phi 3.5 3.8B",
     "phi4-mini": "Phi-4 Mini 3.8B",
+    "phi4_mini": "Phi-4 Mini 3.8B",
     "gemma3_12b": "Gemma 3 12B",
     "deepseek-r1_7b": "DeepSeek-R1 7B",
     "mistral_7b-instruct": "Mistral 7B",
     "claude-opus-4-20250514": "Opus 4",
     "claude-sonnet-4-20250514": "Sonnet 4",
     "multi-model": "Opus 4 + Phi-4 + Qwen 7B",
+    "opus": "Opus 4",
 }
 
 _AGENT_PRETTY = {
@@ -111,8 +116,10 @@ _AGENT_PRETTY = {
     "v3_ensemble": "Ensemble +",
     "v4_confidence_voting": "Confidence Voting:",
     "v4_confidence": "Confidence Voting:",
+    "v5_elimination": "Elimination +",
+    "v6_3way_majority_vote": "3-Way Majority Vote:",
+    "v6_3way": "3-Way Majority Vote:",
     "v7_fewshot": "Few-Shot (3 examples) +",
-    "fewshot": "Few-Shot (3 examples) +",
 }
 
 
