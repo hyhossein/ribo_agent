@@ -27,13 +27,15 @@ knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 | 4. | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
 | 5. | **Elimination + Opus 4** | `0.8639` | `0.8639` | - |
 | 6. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
-| 7. | **fewshot_qwen2.5 7b-instruct** | `0.6154` | `0.6154` | - |
-| 8. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
-| 9. | **fewshot_phi4-mini** | `0.5266` | `0.5266` | - |
-| 10. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
-| 11. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
+| 7. | **zeroshot_gpt-oss-20b** | `0.6213` | `0.6213` | - |
+| 8. | **fewshot_qwen2.5 7b-instruct** | `0.6154` | `0.6154` | - |
+| 9. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
+| 10. | **fewshot_phi4-mini** | `0.5266` | `0.5266` | - |
+| 11. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
+| 12. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
+| 13. | **pipeline_gpt-oss-20b** | `0.4911` | `0.4911` | - |
 
-_Updated 2026-04-25 21:46 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-26 17:42 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`

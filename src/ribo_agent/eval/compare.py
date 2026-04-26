@@ -107,6 +107,7 @@ _MODEL_PRETTY = {
     "claude-sonnet-4-20250514": "Sonnet 4",
     "multi-model": "Opus 4 + Phi-4 + Qwen 7B",
     "opus": "Opus 4",
+    "gpt-oss-20b": "GPT-OSS 20B",
 }
 
 _AGENT_PRETTY = {
