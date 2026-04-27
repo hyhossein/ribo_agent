@@ -14,7 +14,7 @@ to Azure ML for production.
 
 ## 🏆 Leaderboard
 
-Seven agent configurations tested on 169 held-out exam questions.
+Fourteen agent configurations tested on 169 held-out exam questions.
 Progression: open-source local (49%) → frontier zero-shot (79%) →
 knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 
@@ -175,6 +175,7 @@ likely wrong.
  88.2%  ──►  Opus 4 + Ensemble v3                        (~$40)
  88.8%  ──►  Opus 4 + Rewrite + Wiki x2 runs             (~$70)
  89.4%  ──►  Confidence voting                      (no extra cost)
+ 65.7%  ──►  Qwen 7B + QLoRA self-distillation            ($0)
  91.7%  ──►  3-way majority vote                    (no extra cost)
 ```
 
