@@ -1,0 +1,14 @@
+{
+  "n": 169,
+  "accuracy": 0.6568,
+  "macro_f1": 0.6568,
+  "micro_f1": 0.6568,
+  "refusal_rate": 0.0,
+  "latency_ms_mean": null,
+  "latency_ms_p50": null,
+  "latency_ms_p90": null,
+  "per_class": {},
+  "per_domain": {},
+  "per_cognitive": {},
+  "confusion": {}
+}
