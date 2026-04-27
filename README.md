@@ -26,7 +26,7 @@ knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 | 🥉 | **qlora_qwen25 7b** | `0.5976` | `0.5976` | - |
 | 4. | **qlora_v2 Qwen 2.5 7B** | `0.4793` | `0.4793` | - |
 
-_Updated 2026-04-27 06:21 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-27 06:22 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
