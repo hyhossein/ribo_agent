@@ -14,29 +14,19 @@ to Azure ML for production.
 
 ## 🏆 Leaderboard
 
-Fourteen agent configurations tested on 169 held-out exam questions.
+Ten agent configurations tested on 169 held-out exam questions.
 Progression: open-source local (49%) → frontier zero-shot (79%) →
 knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **3-Way Majority Vote: Opus 4** | `0.9172` | `0.9172` | - |
-| 🥈 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
-| 🥉 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
-| 4. | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
-| 5. | **Elimination + Opus 4** | `0.8639` | `0.8639` | - |
-| 6. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
-| 7. | **qlora_v3 Qwen 2.5 7B** | `0.6568` | `0.6568` | - |
-| 8. | **GPT-OSS 20B** | `0.6213` | `0.6213` | - |
-| 9. | **fewshot_qwen2.5 7b-instruct** | `0.6154` | `0.6154` | - |
-| 10. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
-| 11. | **fewshot_phi4-mini** | `0.5266` | `0.5266` | - |
-| 12. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
-| 13. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
-| 14. | **Full Pipeline + GPT-OSS 20B** | `0.4911` | `0.4911` | - |
+| 🥇 | **qlora_v3 Qwen 2.5 7B** | `0.6568` | `0.6568` | - |
+| 🥈 | **selfconsistency_qwen25 7b** | `0.5976` | `0.5976` | - |
+| 🥉 | **qlora_qwen25 7b** | `0.5976` | `0.5976` | - |
+| 4. | **qlora_v2 Qwen 2.5 7B** | `0.4793` | `0.4793` | - |
 
-_Updated 2026-04-27 06:13 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-27 06:21 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -175,7 +165,6 @@ likely wrong.
  88.2%  ──►  Opus 4 + Ensemble v3                        (~$40)
  88.8%  ──►  Opus 4 + Rewrite + Wiki x2 runs             (~$70)
  89.4%  ──►  Confidence voting                      (no extra cost)
- 65.7%  ──►  Qwen 7B + QLoRA self-distillation            ($0)
  91.7%  ──►  3-way majority vote                    (no extra cost)
 ```
 
@@ -341,10 +330,6 @@ Simple majority vote recovers questions any two of three get right.
 | Phi-4 Mini 3.8B | Open-source | 2.5 GB | 52.66% | v7: few-shot (3 examples) |
 | Claude Sonnet 4 | Commercial | — | 52.07% | v0: zero-shot |
 | Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | v0: zero-shot |
-
-| Qwen 2.5 7B + QLoRA | Open-source | 4.4 GB | **65.68%** | v9: filtered self-distillation |
-| GPT-OSS 20B | Open-source | 13.1 GB | 62.13% | v0: zero-shot |
-
 | Qwen 2.5 7B + QLoRA | Open-source | 4.4 GB | **65.68%** | v9: filtered self-distillation |
 | GPT-OSS 20B | Open-source | 13.1 GB | 62.13% | v0: zero-shot |
 
