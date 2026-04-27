@@ -21,21 +21,12 @@ knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 <!-- LEADERBOARD:START -->
 |  | Model | Accuracy | Macro-F1 | Latency (ms) |
 | :--- | :--- | ---: | ---: | ---: |
-| 🥇 | **3-Way Majority Vote: Opus 4** | `0.9172` | `0.9172` | - |
-| 🥈 | **Confidence Voting: Opus 4 + Phi-4 + Qwen 7B** | `0.8935` | `0.8930` | - |
-| 🥉 | **Rewrite+Wiki + Opus 4** | `0.8876` | `0.8869` | 20399 |
-| 4. | **Ensemble + Opus 4** | `0.8817` | `0.8766` | 51512 |
-| 5. | **Elimination + Opus 4** | `0.8639` | `0.8639` | - |
-| 6. | **Opus 4** | `0.7870` | `0.8031` | 7396 |
-| 7. | **zeroshot_gpt-oss-20b** | `0.6213` | `0.6213` | - |
-| 8. | **fewshot_qwen2.5 7b-instruct** | `0.6154` | `0.6154` | - |
-| 9. | **Qwen 2.5 7B** | `0.5976` | `0.6085` | 41979 |
-| 10. | **fewshot_phi4-mini** | `0.5266` | `0.5266` | - |
-| 11. | **Sonnet 4** | `0.5207` | `0.5351` | 6253 |
-| 12. | **Phi-4 Mini 3.8B** | `0.4911` | `0.4982` | 25095 |
-| 13. | **pipeline_gpt-oss-20b** | `0.4911` | `0.4911` | - |
+| 🥇 | **qlora_v3 Qwen 2.5 7B** | `0.6568` | `0.6568` | - |
+| 🥈 | **selfconsistency_qwen25 7b** | `0.5976` | `0.5976` | - |
+| 🥉 | **qlora_qwen25 7b** | `0.5976` | `0.5976` | - |
+| 4. | **qlora_v2 Qwen 2.5 7B** | `0.4793` | `0.4793` | - |
 
-_Updated 2026-04-26 17:42 UTC · 169-question eval set · open-source + commercial models_
+_Updated 2026-04-27 06:03 UTC · 169-question eval set · open-source + commercial models_
 <!-- LEADERBOARD:END -->
 
 **Baselines:** random = `0.2500` · RIBO pass mark (Ontario) = `0.7500`
@@ -195,31 +186,6 @@ overlap and prepend them as context.
 training pool adds measurable value even with simple keyword retrieval.
 Applying the same technique to Opus with the wiki would likely yield an
 additional 1-3% lift on top of the 91.72%.
-
-### Step 9: QLoRA with filtered self-distillation
-
-**Approach:** Fine-tuned Qwen 2.5 7B using MLX QLoRA on Apple Silicon
-(M3 Pro, 36GB). Generated 386 chain-of-thought reasoning traces from
-Qwen itself, then filtered to keep only the 253 traces where the model
-independently arrived at the correct answer. This removes hallucinated
-reasoning. Trained LoRA adapters: 8 layers, lr=2e-5, 200 iterations,
-5.7M trainable parameters (0.076% of 7.6B).
-
-**Results:** 65.68% — a **+5.9pp lift** over base Qwen (59.76%).
-Best open-source result on the leaderboard. Val loss dropped from 1.49
-to 0.61 with no overfitting.
-
-**Key insight:** Filtered self-distillation works — training only on
-traces where the model reasoned correctly teaches it to replicate its
-own best reasoning patterns. Two prior QLoRA attempts failed: answer-only
-labels (no improvement) and synthetic reasoning templates (degraded to
-47.9% from overfitting). Data quality matters more than quantity.
-
-**Negative results documented:** Self-consistency voting (5x at temp 0.7)
-showed no improvement (59.76%). QLoRA with answer-only labels showed no
-improvement. QLoRA with synthetic reasoning degraded performance.
-Temperature-based voting does not help when the model lacks domain
-knowledge.
 
 ### Step 9: QLoRA with filtered self-distillation
 

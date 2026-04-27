@@ -63,6 +63,10 @@ def _collect() -> list[dict]:
 
 _AGENT_PREFIXES = [
     "v7_fewshot",
+    "v9_qlora_v3",
+    "v9_qlora",
+    "pipeline",
+    "zeroshot",
     "v6_3way_majority_vote",
     "v6_3way",
     "v5_elimination",
@@ -121,6 +125,9 @@ _AGENT_PRETTY = {
     "v6_3way_majority_vote": "3-Way Majority Vote:",
     "v6_3way": "3-Way Majority Vote:",
     "v7_fewshot": "Few-Shot (3 examples) +",
+    "v9_qlora": "QLoRA Self-Distillation +",
+    "pipeline": "Full Pipeline +",
+    "zeroshot": "",
 }
 
 
