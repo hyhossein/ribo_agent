@@ -196,6 +196,56 @@ training pool adds measurable value even with simple keyword retrieval.
 Applying the same technique to Opus with the wiki would likely yield an
 additional 1-3% lift on top of the 91.72%.
 
+### Step 9: QLoRA with filtered self-distillation
+
+**Approach:** Fine-tuned Qwen 2.5 7B using MLX QLoRA on Apple Silicon
+(M3 Pro, 36GB). Generated 386 chain-of-thought reasoning traces from
+Qwen itself, then filtered to keep only the 253 traces where the model
+independently arrived at the correct answer. This removes hallucinated
+reasoning. Trained LoRA adapters: 8 layers, lr=2e-5, 200 iterations,
+5.7M trainable parameters (0.076% of 7.6B).
+
+**Results:** 65.68% — a **+5.9pp lift** over base Qwen (59.76%).
+Best open-source result on the leaderboard. Val loss dropped from 1.49
+to 0.61 with no overfitting.
+
+**Key insight:** Filtered self-distillation works — training only on
+traces where the model reasoned correctly teaches it to replicate its
+own best reasoning patterns. Two prior QLoRA attempts failed: answer-only
+labels (no improvement) and synthetic reasoning templates (degraded to
+47.9% from overfitting). Data quality matters more than quantity.
+
+**Negative results documented:** Self-consistency voting (5x at temp 0.7)
+showed no improvement (59.76%). QLoRA with answer-only labels showed no
+improvement. QLoRA with synthetic reasoning degraded performance.
+Temperature-based voting does not help when the model lacks domain
+knowledge.
+
+### Step 9: QLoRA with filtered self-distillation
+
+**Approach:** Fine-tuned Qwen 2.5 7B using MLX QLoRA on Apple Silicon
+(M3 Pro, 36GB). Generated 386 chain-of-thought reasoning traces from
+Qwen itself, then filtered to keep only the 253 traces where the model
+independently arrived at the correct answer. This removes hallucinated
+reasoning. Trained LoRA adapters: 8 layers, lr=2e-5, 200 iterations,
+5.7M trainable parameters (0.076% of 7.6B).
+
+**Results:** 65.68% — a **+5.9pp lift** over base Qwen (59.76%).
+Best open-source result on the leaderboard. Val loss dropped from 1.49
+to 0.61 with no overfitting.
+
+**Key insight:** Filtered self-distillation works — training only on
+traces where the model reasoned correctly teaches it to replicate its
+own best reasoning patterns. Two prior QLoRA attempts failed: answer-only
+labels (no improvement) and synthetic reasoning templates (degraded to
+47.9% from overfitting). Data quality matters more than quantity.
+
+**Negative results documented:** Self-consistency voting (5x at temp 0.7)
+showed no improvement (59.76%). QLoRA with answer-only labels showed no
+improvement. QLoRA with synthetic reasoning degraded performance.
+Temperature-based voting does not help when the model lacks domain
+knowledge.
+
 Three different prompting strategies (step-by-step, elimination,
 confidence-gated) have different failure modes. Simple majority vote
 across all three recovers questions that any two get right, crossing
@@ -205,7 +255,7 @@ the 90% threshold at 91.72%.
 
 ## Agent architectures
 
-Eight agent variants, each building on insights from the previous.
+Ten agent variants, each building on insights from the previous.
 
 ### v0: Zero-shot
 
@@ -315,6 +365,12 @@ Simple majority vote recovers questions any two of three get right.
 | Claude Sonnet 4 | Commercial | — | 52.07% | v0: zero-shot |
 | Phi-4 Mini 3.8B | Open-source | 2.5 GB | 49.11% | v0: zero-shot |
 
+| Qwen 2.5 7B + QLoRA | Open-source | 4.4 GB | **65.68%** | v9: filtered self-distillation |
+| GPT-OSS 20B | Open-source | 13.1 GB | 62.13% | v0: zero-shot |
+
+| Qwen 2.5 7B + QLoRA | Open-source | 4.4 GB | **65.68%** | v9: filtered self-distillation |
+| GPT-OSS 20B | Open-source | 13.1 GB | 62.13% | v0: zero-shot |
+
 Additional open-source models (Llama 3.1, Qwen 3, Gemma 3,
 DeepSeek-R1) configured but not yet evaluated. See
 [`docs/MODELS.md`](./docs/MODELS.md) for the selection rationale.
@@ -353,7 +409,7 @@ make compare
 
 ```
                   ┌──────────────────────────────────────┐
-                  │       Agent Pipeline (v0-v7)         │
+                  │       Agent Pipeline (v0-v9)         │
                   │                                      │
                   │  v0: zero-shot                       │
                   │  v1: wiki compilation                │
