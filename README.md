@@ -5,16 +5,19 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](./tests)
 
-An AI agent that answers Ontario **RIBO Level 1** insurance broker
-licensing exam questions. Benchmarked across open-source local models
-(Ollama) and commercial APIs (Anthropic Claude). Designed to promote
-to Azure ML for production.
+End-to-end LLM evaluation and optimization pipeline for Ontario's **RIBO Level 1**
+insurance broker licensing exam. Progressed from **49% to 91.72%** accuracy
+(pass mark: 75%) across 14 configurations spanning RAG, LLM Wiki knowledge
+compilation, QLoRA fine-tuning with filtered self-distillation on Apple Silicon,
+multi-strategy voting, and elimination prompting. Benchmarks open-source models
+(Qwen 7B, Phi-4) against frontier APIs (Claude Opus 4) with full cost analysis
+($220 total). Three negative results documented. Azure ML production-ready.
 
 ---
 
 ## 🏆 Leaderboard
 
-Ten agent configurations tested on 169 held-out exam questions.
+Fourteen agent configurations tested on 169 held-out exam questions.
 Progression: open-source local (49%) → frontier zero-shot (79%) →
 knowledge-augmented (89%) → multi-strategy majority vote (**91.72%**).
 
@@ -169,7 +172,10 @@ likely wrong.
 
 ```
  49.1%  ──►  Phi-4 Mini, zero-shot, local               ($0)
+ 52.7%  ──►  Phi-4 Mini, few-shot (3 examples)           ($0)
  59.8%  ──►  Qwen 2.5 7B, zero-shot, local              ($0)
+ 61.5%  ──►  Qwen 2.5 7B, few-shot (3 examples)          ($0)
+ 65.7%  ──►  Qwen 2.5 7B, QLoRA self-distillation        ($0)
  78.7%  ──►  Opus 4, zero-shot x3 runs                  (~$15)
  86.4%  ──►  Opus 4 + Elimination prompt                 (~$5)
  88.2%  ──►  Opus 4 + Ensemble v3                        (~$40)
