@@ -1,0 +1,19 @@
+name: v4_multistep
+description: >
+  5-step reasoning with [doc, page, sentence] attribution.
+  DECOMPOSE > RETRIEVE > WIKI_CHECK > REASON > VERIFY
+
+agent: multistep
+
+llm:
+  backend: anthropic
+  api_key: ${ANTHROPIC_API_KEY}
+  model: claude-opus-4-20250514
+
+generation:
+  temperature: 0.0
+  max_tokens: 512
+  top_k_retrieve: 5
+  similarity_threshold: 0.70
+  wiki_max_tokens: 4096
+  enable_voting: false
