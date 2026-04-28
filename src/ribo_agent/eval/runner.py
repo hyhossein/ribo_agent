@@ -26,6 +26,7 @@ from ..agents.base import Prediction
 from ..llm import make_client
 from ..parsers.schema import MCQ
 from .metrics import compute_metrics, format_report
+from .detailed_report import write_detailed_report
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -132,6 +133,13 @@ def run_eval(
         f"({llm_cfg.get('backend', '?')})"
     )
     (run_dir / "report.md").write_text(format_report(metrics, title=title))
+
+    # Detailed per-question report with citations + faithfulness
+    write_detailed_report(
+        preds,
+        run_dir / "detailed_report.md",
+        title=f"Detailed: {title}",
+    )
 
     print(f"\nwrote {run_dir.relative_to(ROOT)}/")
     print(f"  accuracy  = {metrics.accuracy:.4f}")
