@@ -4,14 +4,12 @@ Embeds chunks with sentence-transformers, indexes with FAISS, and
 returns the top-k most relevant chunks for a given query — each with
 its source citation so the agent can reference documents.
 
-Usage:
-    retriever = Retriever.from_chunks_jsonl("data/kb/chunks.jsonl")
-    hits = retriever.search("What is the duty of an insurance broker?", k=5)
-    for hit in hits:
-        print(hit.citation, hit.score)
+Caches embeddings to disk (data/kb/embeddings.npy) so subsequent
+loads skip the expensive encoding step entirely.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +19,8 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from .chunker import Chunk
+
+_CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "kb"
 
 
 @dataclass
@@ -55,13 +55,27 @@ class Retriever:
         print(f"[retriever] loading embedding model: {model_name}")
         self._encoder = SentenceTransformer(model_name)
 
-        # embed all chunks
-        texts = [c.text for c in chunks]
-        print(f"[retriever] embedding {len(texts)} chunks ...")
-        embeddings = self._encoder.encode(
-            texts, show_progress_bar=True, normalize_embeddings=True,
-        )
-        self._embeddings = np.array(embeddings, dtype=np.float32)
+        # Build a cache key from chunk count + first/last chunk ids
+        cache_key = f"{model_name}_{len(chunks)}"
+        if chunks:
+            cache_key += f"_{chunks[0].chunk_id}_{chunks[-1].chunk_id}"
+        cache_hash = hashlib.md5(cache_key.encode()).hexdigest()[:12]
+        cache_path = _CACHE_DIR / f"embeddings_{cache_hash}.npy"
+
+        if cache_path.exists():
+            print(f"[retriever] loading cached embeddings from {cache_path.name}")
+            self._embeddings = np.load(cache_path)
+        else:
+            texts = [c.text for c in chunks]
+            print(f"[retriever] embedding {len(texts)} chunks ...")
+            embeddings = self._encoder.encode(
+                texts, show_progress_bar=True, normalize_embeddings=True,
+                batch_size=64,
+            )
+            self._embeddings = np.array(embeddings, dtype=np.float32)
+            _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            np.save(cache_path, self._embeddings)
+            print(f"[retriever] cached embeddings to {cache_path.name}")
 
         # build FAISS index (inner product on normalised vectors = cosine)
         dim = self._embeddings.shape[1]

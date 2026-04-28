@@ -44,11 +44,36 @@ def _load_llm():
 
 
 SYSTEM_PROMPT = (
-    "You are an expert Ontario insurance broker preparing for the RIBO Level 1 "
-    "licensing exam. Answer questions accurately using the provided reference "
-    "documents. Always cite the relevant document and page when possible. "
-    "If the documents don't contain the answer, say so clearly."
+    "You are an expert Ontario insurance professional with deep knowledge "
+    "of the Registered Insurance Brokers Act, Ontario Regulation 991, RIBO "
+    "bylaws, OAP-1, and general insurance principles.\n\n"
+    "Rules:\n"
+    "- ALWAYS give a clear, definitive answer. Never say 'I don't know' or "
+    "'I cannot answer'.\n"
+    "- If the documents don't cover the topic, answer from your training knowledge.\n"
+    "- Cite references as [1], [2] etc. when using document content.\n"
+    "- Be concise: 2-4 sentences for the core answer, then brief reasoning."
 )
+
+_SOURCE_LABELS = {
+    "RIB_Act_1990": "Registered Insurance Brokers Act",
+    "Ont_Reg_991": "Ontario Regulation 991",
+    "RIBO_Bylaws": "RIBO Bylaws",
+    "OAP_1": "Ontario Auto Policy (OAP-1)",
+}
+
+
+def _clean_source(raw: str) -> str:
+    return _SOURCE_LABELS.get(raw, raw.replace("_", " "))
+
+
+def _clean_path(source: str, section: str | None, page: int | None) -> str:
+    parts = [_clean_source(source)]
+    if section:
+        parts.append(f"§ {section}")
+    if page:
+        parts.append(f"p. {page}")
+    return " → ".join(parts)
 
 
 def _ask(query: str, retriever, llm, top_k: int = 5) -> dict:
@@ -57,13 +82,12 @@ def _ask(query: str, retriever, llm, top_k: int = 5) -> dict:
     hits = retriever.search(query, k=top_k)
     retrieval_ms = (time.perf_counter() - t0) * 1000
 
-    # Build context
+    # Build context with clean paths
     context_blocks = []
     for i, hit in enumerate(hits, 1):
-        page = f" [page {hit.chunk.page_number}]" if hit.chunk.page_number else ""
+        path = _clean_path(hit.source, hit.chunk.section, hit.chunk.page_number)
         signals = ", ".join(hit.source_signals)
-        header = f"[{i}] {hit.citation}{page} ({signals})"
-        context_blocks.append(f"{header}\n{hit.text[:500].rstrip()}")
+        context_blocks.append(f"[{i}] {path} ({signals})\n{hit.text[:500].rstrip()}")
     context = "\n\n".join(context_blocks)
 
     prompt = f"""{SYSTEM_PROMPT}
@@ -75,17 +99,34 @@ Reference documents:
 
 User question: {query}
 
-Provide a clear, accurate answer. Reference the document numbers [1], [2], etc. when citing information."""
+Give a clear, definitive answer. Reference [1], [2] etc. when citing documents."""
 
     t1 = time.perf_counter()
-    resp = llm.complete(prompt, temperature=0.0, max_tokens=512)
+    resp = llm.complete(prompt, temperature=0.0, max_tokens=300)
     generation_ms = (time.perf_counter() - t1) * 1000
 
-    citations = [hit.to_citation_dict(rank=i) for i, hit in enumerate(hits, 1)]
+    # Build clean citations
+    citations = []
+    for i, hit in enumerate(hits, 1):
+        citations.append({
+            "rank": i,
+            "source": _clean_source(hit.source),
+            "path": _clean_path(hit.source, hit.chunk.section, hit.chunk.page_number),
+            "section": hit.chunk.section,
+            "page_number": hit.chunk.page_number,
+            "score": round(hit.score, 4),
+            "snippet": hit.text[:300],
+            "retrieval_signals": hit.source_signals,
+        })
+
+    # Confidence: based on top retrieval score
+    top_score = hits[0].score if hits else 0
+    confidence = round(min(1.0, top_score * 0.6 + 0.3), 3) if hits else 0.2
 
     return {
         "answer": resp.text,
         "citations": citations,
+        "confidence": confidence,
         "retrieval_ms": round(retrieval_ms, 1),
         "generation_ms": round(generation_ms, 1),
         "total_ms": round(retrieval_ms + generation_ms, 1),
@@ -139,14 +180,17 @@ def main():
             st.markdown(msg["content"])
             if msg["role"] == "assistant" and "metadata" in msg:
                 meta = msg["metadata"]
+                # Confidence badge
+                conf = meta.get("confidence", 0)
+                conf_color = "🟢" if conf >= 0.7 else "🟡" if conf >= 0.4 else "🔴"
+                st.caption(f"{conf_color} Confidence: {conf:.0%}")
                 # Citations expander
                 with st.expander("📚 Citations & Sources"):
                     for cit in meta.get("citations", []):
                         signals = ", ".join(cit.get("retrieval_signals", []))
-                        page = cit.get("page_number", "?")
                         st.markdown(
-                            f"**[{cit['rank']}] {cit['citation']}** "
-                            f"(page {page}, score: {cit['score']:.3f}, via: {signals})"
+                            f"**[{cit['rank']}] {cit.get('path', cit.get('citation', '?'))}** "
+                            f"(score: {cit['score']:.3f}, via: {signals})"
                         )
                         st.text(cit.get("snippet", "")[:250])
                 # Performance
@@ -174,13 +218,17 @@ def main():
 
             st.markdown(result["answer"])
 
+            # Confidence badge
+            conf = result.get("confidence", 0)
+            conf_color = "🟢" if conf >= 0.7 else "🟡" if conf >= 0.4 else "🔴"
+            st.caption(f"{conf_color} Confidence: {conf:.0%}")
+
             with st.expander("📚 Citations & Sources"):
                 for cit in result["citations"]:
                     signals = ", ".join(cit.get("retrieval_signals", []))
-                    page = cit.get("page_number", "?")
                     st.markdown(
-                        f"**[{cit['rank']}] {cit['citation']}** "
-                        f"(page {page}, score: {cit['score']:.3f}, via: {signals})"
+                        f"**[{cit['rank']}] {cit.get('path', '?')}** "
+                        f"(score: {cit['score']:.3f}, via: {signals})"
                     )
                     st.text(cit.get("snippet", "")[:250])
 

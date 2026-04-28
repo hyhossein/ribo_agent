@@ -27,9 +27,11 @@ class OllamaClient:
         model: str = "qwen2.5:7b-instruct",
         base_url: str = "http://localhost:11434",
         timeout_s: float = 120.0,
+        num_ctx: int = 4096,
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
+        self.num_ctx = num_ctx
         self._client = httpx.Client(base_url=self.base_url, timeout=timeout_s)
 
     def complete(
@@ -44,9 +46,11 @@ class OllamaClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
+            "keep_alive": "10m",
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
+                "num_ctx": self.num_ctx,
             },
         }
         if stop:
