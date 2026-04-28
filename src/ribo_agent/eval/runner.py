@@ -69,15 +69,24 @@ def run_eval(
     agent_type = agent_cfg.get("type", "zeroshot")
 
     if agent_type == "rag":
-        from ..kb.retriever import Retriever
         ret_cfg = config.get("retrieval", {})
         chunks_path = Path(ret_cfg.get("chunks_path", "data/kb/chunks.jsonl"))
         if not chunks_path.is_absolute():
             chunks_path = ROOT / chunks_path
-        retriever = Retriever.from_chunks_jsonl(
-            chunks_path,
-            model_name=ret_cfg.get("embedding_model", "BAAI/bge-small-en-v1.5"),
-        )
+        embedding_model = ret_cfg.get("embedding_model", "BAAI/bge-small-en-v1.5")
+        retrieval_mode = ret_cfg.get("mode", "dense")  # dense | hybrid
+
+        if retrieval_mode == "hybrid":
+            from ..kb.hybrid_retriever import HybridRetriever
+            from ..kb.chunker import Chunk
+            import json as _json
+            _chunks = [Chunk(**_json.loads(l)) for l in chunks_path.open()]
+            retriever = HybridRetriever(_chunks, embedding_model=embedding_model)
+        else:
+            from ..kb.retriever import Retriever
+            retriever = Retriever.from_chunks_jsonl(
+                chunks_path, model_name=embedding_model,
+            )
         agent = RAGAgent(
             llm,
             retriever,
@@ -140,6 +149,20 @@ def run_eval(
         run_dir / "detailed_report.md",
         title=f"Detailed: {title}",
     )
+
+    # Profiling summary
+    from .profiler import CostTracker
+    tracker = CostTracker()
+    for p in preds:
+        extras = p.extras or {}
+        tracker.record(
+            qid=p.qid,
+            retrieval_ms=extras.get("retrieval_ms", 0),
+            generation_ms=extras.get("generation_ms", 0),
+            prompt_tokens=p.prompt_tokens or 0,
+            completion_tokens=p.completion_tokens or 0,
+        )
+    (run_dir / "profiling.md").write_text(tracker.format_summary())
 
     print(f"\nwrote {run_dir.relative_to(ROOT)}/")
     print(f"  accuracy  = {metrics.accuracy:.4f}")

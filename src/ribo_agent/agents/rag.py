@@ -1,13 +1,13 @@
 """RAG agent — retrieval-augmented generation with document citations.
 
-Retrieves the top-k most relevant KB chunks for each question, injects
-them into the prompt with source citations, and asks the LLM to answer.
-Every prediction carries a `citations` list so answers are traceable
-back to the original documents.
+Supports both simple (FAISS-only) and hybrid (FAISS + BM25 + KG) retrieval.
+Every prediction carries a `citations` list traceable to document → section → text.
+Includes timing breakdown for cost/performance profiling.
 """
 from __future__ import annotations
 
 import re
+import time
 
 from ..kb.retriever import Retriever, RetrievalHit
 from ..llm.base import LLMClient
@@ -42,26 +42,36 @@ First identify which reference (if any) is relevant, quote the key phrase, then 
 _TAG_RE = re.compile(r"<answer>\s*([A-D])\s*</answer>", re.IGNORECASE)
 
 
-def _format_context(hits: list[RetrievalHit]) -> str:
-    """Format retrieved chunks as numbered reference blocks (truncated for prompt budget)."""
+def _format_context_simple(hits: list[RetrievalHit]) -> str:
     blocks: list[str] = []
     for i, hit in enumerate(hits, 1):
         header = f"[{i}] {hit.citation} (source: {hit.source})"
-        # Truncate to 500 chars to keep prompt concise
-        text = hit.text[:500].rstrip()
-        blocks.append(f"{header}\n{text}")
+        blocks.append(f"{header}\n{hit.text[:500].rstrip()}")
     return "\n\n".join(blocks)
 
 
-def _hit_to_citation(hit: RetrievalHit, rank: int) -> dict:
-    """Convert a RetrievalHit to a serialisable citation dict."""
+def _format_context_hybrid(hits) -> str:
+    """Format HybridHit objects."""
+    blocks: list[str] = []
+    for i, hit in enumerate(hits, 1):
+        header = f"[{i}] {hit.citation} (source: {hit.source})"
+        page_info = ""
+        if hit.chunk.page_number:
+            page_info = f" [page {hit.chunk.page_number}]"
+        blocks.append(f"{header}{page_info}\n{hit.text[:500].rstrip()}")
+    return "\n\n".join(blocks)
+
+
+def _hit_to_citation_simple(hit: RetrievalHit, rank: int) -> dict:
     return {
         "rank": rank,
         "source": hit.source,
         "citation": hit.citation,
         "section": hit.chunk.section,
+        "page_number": hit.chunk.page_number,
         "score": round(hit.score, 4),
         "snippet": hit.text[:300],
+        "retrieval_signals": ["dense"],
     }
 
 
@@ -71,7 +81,7 @@ class RAGAgent:
     def __init__(
         self,
         llm: LLMClient,
-        retriever: Retriever,
+        retriever,  # Retriever or HybridRetriever
         *,
         top_k: int = 5,
         temperature: float = 0.0,
@@ -82,17 +92,23 @@ class RAGAgent:
         self.top_k = top_k
         self.temperature = temperature
         self.max_tokens = max_tokens
+        # detect retriever type
+        self._is_hybrid = hasattr(retriever, 'kg')
 
     def answer(self, mcq: MCQ) -> Prediction:
-        # 1. Retrieve relevant chunks
-        query = mcq.stem
-        hits = self.retriever.search(query, k=self.top_k)
+        # 1. Retrieve
+        t_ret = time.perf_counter()
+        hits = self.retriever.search(mcq.stem, k=self.top_k)
+        retrieval_ms = (time.perf_counter() - t_ret) * 1000
 
-        # 2. Build prompt with context
-        context = _format_context(hits)
+        # 2. Build prompt
+        if self._is_hybrid:
+            context = _format_context_hybrid(hits)
+        else:
+            context = _format_context_simple(hits)
+
         prompt = (
-            SYSTEM
-            + "\n\n"
+            SYSTEM + "\n\n"
             + USER_TEMPLATE.format(
                 context=context,
                 stem=mcq.stem,
@@ -104,12 +120,14 @@ class RAGAgent:
         )
 
         # 3. Call LLM
+        t_gen = time.perf_counter()
         resp = self.llm.complete(
             prompt,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
             stop=["</answer>"],
         )
+        generation_ms = (time.perf_counter() - t_gen) * 1000
 
         # 4. Extract answer
         raw = resp.text
@@ -119,11 +137,11 @@ class RAGAgent:
             raw = raw + "</answer>"
         predicted = extract_answer(raw)
 
-        # 5. Build citations list
-        citations = [
-            _hit_to_citation(hit, rank=i)
-            for i, hit in enumerate(hits, 1)
-        ]
+        # 5. Build citations
+        if self._is_hybrid:
+            citations = [hit.to_citation_dict(rank=i) for i, hit in enumerate(hits, 1)]
+        else:
+            citations = [_hit_to_citation_simple(hit, rank=i) for i, hit in enumerate(hits, 1)]
 
         return Prediction(
             qid=mcq.qid,
@@ -139,5 +157,8 @@ class RAGAgent:
                 "model": resp.model,
                 "backend": resp.backend,
                 "top_k": self.top_k,
+                "retrieval_ms": round(retrieval_ms, 1),
+                "generation_ms": round(generation_ms, 1),
+                "retrieval_type": "hybrid" if self._is_hybrid else "dense",
             },
         )
