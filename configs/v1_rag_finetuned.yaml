@@ -1,0 +1,35 @@
+# v1 RAG agent — fine-tuned Qwen + retrieval with document citations.
+#
+# How to use:
+#   1. Put your fine-tuned safetensors in a folder (e.g. models/qwen-ribo-finetuned/)
+#   2. Update llm.model_path below to point to that folder
+#   3. Run: make parse && make kb   (if not already done)
+#   4. Run: python -m ribo_agent.eval.runner --config configs/v1_rag_finetuned.yaml
+
+name: v1_rag_finetuned
+description: >
+  Fine-tuned Qwen + RAG retrieval over the RIBO study corpus.
+  Every answer cites the source document and section.
+
+agent:
+  type: rag           # "zeroshot" or "rag"
+  top_k: 5            # number of KB chunks to retrieve per question
+
+llm:
+  backend: huggingface
+  model_path: models/qwen-ribo-finetuned    # <-- EDIT: path to your safetensors dir
+  device: null                                # auto-detect (mps/cuda/cpu)
+  torch_dtype: auto                           # auto, float16, bfloat16, float32
+  timeout_s: 300
+
+retrieval:
+  chunks_path: data/kb/chunks.jsonl
+  embedding_model: BAAI/bge-small-en-v1.5     # small, fast, good for retrieval
+
+generation:
+  temperature: 0.0
+  max_tokens: 512
+  stop: ["</answer>", "\n\nQuestion"]
+
+storage:
+  backend: env
