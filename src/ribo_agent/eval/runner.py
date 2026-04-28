@@ -86,6 +86,17 @@ def _make_agent(config: dict, llm):
             sc_temperature=gen_cfg.get("sc_temperature", 0.7),
         )
 
+    if agent_type == "multistep":
+        from ..agents.multistep_agent import MultiStepAgent
+        return MultiStepAgent(
+            llm, temperature=temp, max_tokens=max_tok,
+            top_k_retrieve=gen_cfg.get("top_k_retrieve", 5),
+            similarity_threshold=gen_cfg.get("similarity_threshold", 0.70),
+            wiki_max_tokens=gen_cfg.get("wiki_max_tokens", 4096),
+            enable_voting=gen_cfg.get("enable_voting", False),
+            vote_samples=gen_cfg.get("vote_samples", 3),
+        )
+
     raise ValueError(f"unknown agent type: {agent_type!r}")
 
 
