@@ -1,0 +1,15 @@
+name: v0_zeroshot
+description: Zero-shot baseline using DeepSeek-R1-Distill-Qwen-7B (reasoning model).
+
+llm:
+  backend: ollama
+  model: deepseek-r1:7b
+  base_url: http://localhost:11434
+  timeout_s: 300
+
+# Reasoning models emit long <think> blocks. Give them more tokens and a
+# longer timeout. We also let max_tokens run higher so the answer tag isn't
+# cut off after the reasoning.
+generation:
+  temperature: 0.0
+  max_tokens: 1024

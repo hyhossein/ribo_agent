@@ -1,0 +1,12 @@
+name: v0_zeroshot
+description: Zero-shot baseline using Qwen 2.5 7B via local Ollama.
+
+llm:
+  backend: ollama
+  model: qwen2.5:7b-instruct
+  base_url: http://localhost:11434
+  timeout_s: 180
+
+generation:
+  temperature: 0.0
+  max_tokens: 256

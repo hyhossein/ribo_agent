@@ -1,0 +1,145 @@
+======================================================================
+1. FILE INVENTORY
+======================================================================
+
+-- data/raw/questions/
+  695993459-Practise-RIBO-Exam.pdf                          209.0 KB    19p  [text]  Microsoft® Word for Microsoft 
+  901740466-1-RIBO-Manual-249-387 (1).pdf                  1193.6 KB   139p  [text]  iLovePDF
+  901740471-RIBO-Manual-Questions (1).pdf                  1453.1 KB   161p  [text]  iLovePDF
+  Sample-Questions-RIBO-Level-1-Exam (1).pdf                291.2 KB    31p  [text]  Microsoft® Word for Microsoft 
+
+-- data/raw/study/
+  Ontario Automobile Policy 2025 (1).pdf                    555.6 KB    68p  [text]  Accessibil-IT Inc.
+  Ontario Regulation 989.doc                                 70.5 KB  (doc)
+  Ontario Regulation 990.doc                                 72.5 KB  (doc)
+  Ontario Regulation 991.doc                                124.0 KB  (doc)
+  RIBO By-Law No 2 March 2024.pdf                           621.9 KB    12p  [text]  Microsoft: Print To PDF
+  RIBO By-Law No 3 March 2024.pdf                           806.6 KB    27p  [text]  Microsoft: Print To PDF
+  RIBO By-Law No. 1 March 2024.pdf                          804.1 KB    33p  [text]  Microsoft: Print To PDF
+  Registered Insurance Brokers Act 1990 (1).doc             167.5 KB  (doc)
+
+======================================================================
+2. QUESTION-FILE CLASSIFICATION
+======================================================================
+  695993459-Practise-RIBO-Exam.pdf                        -> MCQ with separate X-grid answer key
+  901740466-1-RIBO-Manual-249-387 (1).pdf                 -> Manual-style MCQ a/b/c/d (112 option-markers on first page; answers likely bolded)
+  901740471-RIBO-Manual-Questions (1).pdf                 -> Manual-style MCQ a/b/c/d (24 option-markers on first page; answers likely bolded)
+  Sample-Questions-RIBO-Level-1-Exam (1).pdf              -> MCQ with inline answers + metadata (79 'Correct Option' markers)
+
+======================================================================
+3. SAMPLE QUESTIONS PROFILE (rich metadata)
+======================================================================
+  questions found:  79
+  correct options:  79
+
+  content domains:
+     48  General Insurance and Industry Knowledge
+     19  Personal Lines Habitational
+      7  Commercial Lines
+      5  Personal Lines Automobile
+
+  competencies (79 total):
+     46  Insurance Product and Industry Knowledge
+     16  Legal and Regulatory Compliance
+      8  Professionalism, Integrity, and Ethics
+      3  Critical and Analytical Thinking
+      2  Consulting and Advising
+      2  Claim Services
+      1  Information Management
+      1  Risk Identification, Assessment, and Classification
+
+  cognitive levels:
+     38  Comprehension
+     28  Knowledge
+     13  Application
+
+  stem char counts: min=31 p50=167 p90=297 max=533
+
+======================================================================
+4. PRACTICE EXAM ANSWER GRID INSPECTION
+======================================================================
+  answer key spans 3 pages (after first)
+    page 0: 49 X's, 4 unique column offsets: [10, 17, 32, 45]
+    page 1: 41 X's, 4 unique column offsets: [10, 14, 18, 22]
+
+======================================================================
+5. PRACTICE EXAM QUESTION NUMBER COVERAGE
+======================================================================
+  question numbers 1-90, found via naive regex: 75
+  missing: [6, 12, 19, 25, 31, 37, 43, 49, 54, 59, 64, 69, 75, 81, 86]
+
+======================================================================
+6. RIBO MANUAL QUESTION PDFs
+======================================================================
+
+  901740466-1-RIBO-Manual-249-387 (1).pdf
+    question-start markers: 680
+    option markers:         2208
+    approx MCQ items:       552
+    subsection labels seen: Counter({'Principles & Practices of Insurance (40)': 2, 'RIBO Rules & Regulations (23)': 2, 'Travel Health Insurance (41)': 2, 'Automobile Insurance (126)': 2, 'Habitational Insurance (26)': 2, 'Commercial Insurance (29)': 2})
+
+  901740471-RIBO-Manual-Questions (1).pdf
+    question-start markers: 1059
+    option markers:         2360
+    approx MCQ items:       590
+    subsection labels seen: Counter()
+
+======================================================================
+7. STUDY DOCUMENT STRUCTURE PREVIEW
+======================================================================
+Only the top-of-document lines per file. Goal: confirm each document
+has a clean section structure we can chunk by.
+
+-- Ontario Automobile Policy 2025 (1).pdf
+    Ontario Automobile Policy
+    (OAP 1) Owner’s Policy
+    Approved by the Chief Executive Officer of the Financial Services Regulatory Authority of Ontario for
+    use as the standard Owner's Policy on or after July 1, 2025
+    About This Policy
+    This is your automobile insurance policy. It is written in easy to understand language. Please read it careful
+
+-- Ontario Regulation 989.doc
+    >   bjbj 3 j j ! l 8 J V ` v ( " W Y Y Y Y Y Y $ 8   X } } | W W < D ; j c g d ^ d ; 0 F ; Registered Insuranc
+
+-- Ontario Regulation 990.doc
+    > %`
+    bjbj"x"x 9 @ @ - x x x x x x x 8 , 8 & ` X ( " $ h & x x x x x X x x L 0 & 4 x & d x x x x x x Registered Insu
+
+-- Ontario Regulation 991.doc
+    > W bjbj~ ~ A e e~ / % % % % % 9 9 9 8 q , T 9 p a ( T V V V V V V $ Y < z % z % % 4 B % % T T D 0 t%K, ! @ 0 
+
+-- RIBO By-Law No 2 March 2024.pdf
+    BY-LAW NO. 2
+    A by-law relating to the nomination and election of Directors
+    REGISTERED INSURANCE BROKERS OF ONTARIO
+    March 2024
+    TABLE OF CONTENTS
+    Page
+
+-- RIBO By-Law No 3 March 2024.pdf
+    BY-LAW NO. 3
+    A by-law relating to Licensees
+    REGISTERED INSURANCE BROKERS OF ONTARIO
+    March 2024
+    TABLE OF CONTENTS
+    Page
+
+-- RIBO By-Law No. 1 March 2024.pdf
+    BY-LAW NO. 1
+    A by-law relating generally to the conduct of the affairs of
+    REGISTERED INSURANCE BROKERS OF ONTARIO
+    March 2024
+    TABLE OF CONTENTS
+    Page
+
+-- Registered Insurance Brokers Act 1990 (1).doc
+    > J L G H I { Z bjbj| | 7 f f, - *X *X e e e e e e e e 8 f , 4g , e } `h J m " m m m o b bp , q q} s} s} s} s}
+
+======================================================================
+8. LEAKAGE CHECK (manual vs. sample set)
+======================================================================
+  unique sample-set stem prefixes:  79
+  unique manual stem prefixes:      1063
+  exact-prefix overlap:             0
+
+Day 1 EDA complete. See docs/EDA.md for the write-up.

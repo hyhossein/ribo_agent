@@ -1,0 +1,12 @@
+name: v0_zeroshot
+description: Zero-shot baseline using Gemma 3 12B (Google, strong long-context) via local Ollama.
+
+llm:
+  backend: ollama
+  model: gemma3:12b
+  base_url: http://localhost:11434
+  timeout_s: 180
+
+generation:
+  temperature: 0.0
+  max_tokens: 256
