@@ -19,43 +19,37 @@ from .zeroshot import extract_answer
 SYSTEM = (
     "You are preparing to take the Ontario RIBO Level 1 insurance broker "
     "licensing exam. You answer multiple-choice questions by selecting "
-    "the single best option.\n\n"
-    "IMPORTANT: Base your reasoning on the reference documents provided. "
-    "When explaining your answer, cite the specific document and section "
-    "that supports your choice (e.g. 'According to RIB Act s. 14, ...')."
+    "the single best option. Use the reference documents when relevant, "
+    "but trust your knowledge if the documents are not helpful."
 )
 
-USER_TEMPLATE = """Use the following reference documents to answer the question. Cite the relevant source(s) in your reasoning.
-
+USER_TEMPLATE = """Reference documents:
 {context}
 
 ---
 
 Question: {stem}
 
-Options:
 A. {a}
 B. {b}
 C. {c}
 D. {d}
 
-Instructions:
-1. Think step by step, citing the relevant document section(s) that support your reasoning.
-2. Give your final answer on the last line in the exact format:
-<answer>LETTER</answer>
-
-where LETTER is one of A, B, C, or D."""
+First identify which reference (if any) is relevant, quote the key phrase, then pick the best answer.
+<answer>LETTER</answer>"""
 
 
 _TAG_RE = re.compile(r"<answer>\s*([A-D])\s*</answer>", re.IGNORECASE)
 
 
 def _format_context(hits: list[RetrievalHit]) -> str:
-    """Format retrieved chunks as numbered reference blocks."""
+    """Format retrieved chunks as numbered reference blocks (truncated for prompt budget)."""
     blocks: list[str] = []
     for i, hit in enumerate(hits, 1):
         header = f"[{i}] {hit.citation} (source: {hit.source})"
-        blocks.append(f"{header}\n{hit.text}")
+        # Truncate to 500 chars to keep prompt concise
+        text = hit.text[:500].rstrip()
+        blocks.append(f"{header}\n{text}")
     return "\n\n".join(blocks)
 
 
